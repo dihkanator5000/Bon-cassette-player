@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Cassette Audio Player | bon</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Pirata+One&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Pirata+One&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Pirata+One&display=swap"></noscript>
 <style>
 :root {
   --grayscale-1:  #ffffff;
@@ -41,8 +42,7 @@
   --grad-3: #14b8a6;
   --grad-blur: 70px;
 
-  /* SVG noise texture — shared by cassette shell and reel window */
-  --noise-texture: url("data:image/svg+xml,%3Csvg width='180' height='180' viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --noise-texture: url("data:image/svg+xml,%3Csvg width='140' height='140' viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 body[data-theme="dark"] {
@@ -77,14 +77,50 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   min-height: 100vh;
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+  -webkit-tap-highlight-color: transparent;
 }
+
+button,
+.playlist-tab,
+.fab,
+.act-btn,
+.seg-btn,
+.key-badge,
+.key-reset,
+.tab-remove,
+.settings-close,
+.corner-btn,
+.ctrl-btn,
+.mini-btn {
+  touch-action: manipulation;
+}
+
 body.theme-transitioning,
 body.theme-transitioning * {
   transition: background-color .3s ease, color .3s ease, border-color .3s ease !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DEVICE-AWARE VISIBILITY
+   Driven by body[data-device] and body[data-has-keyboard]
+   set by the inline probe in <body> + the main script.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Hide the shortcuts FAB / panel / settings section
+   whenever no physical keyboard is available. */
+body[data-has-keyboard="false"] .fab-shortcuts,
+body[data-has-keyboard="false"] .shortcuts-panel,
+body[data-has-keyboard="false"] .setting-section-shortcuts {
+  display: none !important;
+}
+
+/* On touch devices, always show the tab-remove affordance. */
+@media (hover: none) and (pointer: coarse) {
+  .playlist-tab .tab-remove {
+    opacity: 0.6;
+    pointer-events: auto;
+  }
+  .playlist-tab .tab-remove:active { opacity: 1; }
 }
 
 .gradient-bg {
@@ -93,20 +129,22 @@ body.theme-transitioning * {
   z-index: -1;
   pointer-events: none;
   opacity: 0;
+  display: none;
   transition: opacity 1.2s ease;
   background:
     radial-gradient(50% 55% at 22% 30%, var(--grad-1), transparent 65%),
     radial-gradient(55% 50% at 80% 70%, var(--grad-2), transparent 65%),
     radial-gradient(45% 50% at 55% 50%, var(--grad-3), transparent 68%);
   filter: blur(var(--grad-blur));
-  will-change: opacity, transform;
+}
+body[data-appearance="gradient"] .gradient-bg {
+  display: block;
   animation: gradientDrift 26s ease-in-out infinite;
 }
-body[data-appearance="gradient"] .gradient-bg { opacity: 1; }
 body[data-appearance="gradient"]:not(.playing) .gradient-bg { opacity: 0.35; }
 body[data-appearance="gradient"].playing .gradient-bg { opacity: 1; }
 body.animations-off .gradient-bg { animation: none; }
-body[data-perf="on"] .gradient-bg { animation: none; }
+body[data-grad-anim="off"] .gradient-bg { animation: none !important; }
 @keyframes gradientDrift {
   0%   { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
   25%  { transform: translate3d(4%, -3%, 0) scale(1.08) rotate(3deg); }
@@ -114,7 +152,23 @@ body[data-perf="on"] .gradient-bg { animation: none; }
   80%  { transform: translate3d(3%, 2%, 0) scale(1.05) rotate(2deg); }
   100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
 }
-@media (prefers-reduced-motion: reduce) { .gradient-bg { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .gradient-bg { animation: none !important; } }
+
+body[data-blur="off"] .gradient-bg { filter: none !important; }
+
+.wallpaper-bg {
+  position: fixed; inset: 0; z-index: -1;
+  display: none; pointer-events: none;
+  background: center / cover no-repeat;
+}
+body[data-appearance="wallpaper"] .wallpaper-bg { display: block; }
+body[data-blur="off"] .volume-popup {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: rgba(20, 20, 20, 0.96) !important;
+}
+
+body[data-reels="off"] .reel svg { transform: none !important; }
 
 main { max-width: 56rem; margin: 0 auto; position: relative; z-index: 1; }
 .content { padding: 2rem 2rem 4rem; }
@@ -149,7 +203,6 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
   color: var(--grayscale-12);
   container-type: inline-size;
 }
-@media (max-width: 560px) { .player { min-height: 480px; padding: 3rem 0.875rem; } }
 .player-inner { position: relative; z-index: 1; width: 100%; max-width: 530px; }
 
 .player-corner-controls {
@@ -197,7 +250,6 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
   transition: opacity .18s ease;
 }
 .cassette.switching { opacity: 0.55; }
-@media (max-width: 560px) { .cassette { border-radius: 0.75rem; } }
 
 .cassette-inner-border {
   position: absolute; inset: 6px; border-radius: 13px;
@@ -239,7 +291,6 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
   box-shadow: inset 0 0 12px rgba(92, 74, 49, 0.12);
   container-type: inline-size;
 }
-@media (max-width: 560px) { .label { border-radius: 6px; } }
 
 .label-header {
   position: relative; z-index: 2;
@@ -283,7 +334,6 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
 .catalogue:empty { display: none; }
 
 .reel-section { position: relative; margin-top: 1rem; height: 34%; }
-@media (max-width: 560px) { .reel-section { height: 31%; } }
 
 .stripes {
   position: absolute; left: -0.25rem; right: -0.25rem;
@@ -302,7 +352,6 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
   background: #1b1a18;
   background-image: linear-gradient(rgba(255, 255, 255, 0.13), transparent 45%);
   box-shadow: 0 0 0 4px var(--label-border), inset 0 3px 8px rgba(0, 0, 0, 0.58);
-  --reel-window-color: #1b1a18;
   container-type: size;
 }
 .reel-window-texture {
@@ -348,11 +397,10 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
   position: absolute; inset: 0; width: 100%; height: 100%;
   border-radius: 50%; transform-origin: center;
   transform: rotate(var(--reel-rotation));
-  will-change: transform;
 }
 @media (prefers-reduced-motion: reduce) { .reel svg { transform: none !important; } }
 body.animations-off .reel svg { transform: none !important; }
-body[data-perf="on"] .reel svg { transform: none !important; }
+body.playing .reel svg { will-change: transform; }
 
 .progress-area {
   position: absolute; z-index: 5;
@@ -363,6 +411,7 @@ body[data-perf="on"] .reel svg { transform: none !important; }
   position: relative; height: 1.5rem; width: 100%;
   display: flex; align-items: center;
   cursor: pointer; touch-action: none;
+  user-select: none; -webkit-user-select: none;
 }
 .progress-slider.disabled { cursor: default; }
 .progress-track {
@@ -371,9 +420,9 @@ body[data-perf="on"] .reel svg { transform: none !important; }
   background: color-mix(in srgb, var(--label-ink) 28%, transparent);
 }
 .progress-indicator {
-  height: 100%; width: 0%;
+  height: 100%; width: 100%;
   border-radius: 999px; background: var(--label-ink);
-  transition: width 0.08s linear;
+  transform: scaleX(0); transform-origin: left center;
 }
 .progress-thumb {
   position: absolute; top: 50%;
@@ -445,6 +494,11 @@ body[data-perf="on"] .reel svg { transform: none !important; }
 .ctrl-btn.large svg { width: 18px; height: 18px; }
 
 .volume-wrap { position: relative; display: grid; place-items: center; }
+.volume-wrap .ctrl-btn {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
 .volume-popup {
   position: absolute;
   bottom: calc(100% + 0.6rem);
@@ -458,13 +512,14 @@ body[data-perf="on"] .reel svg { transform: none !important; }
   border-radius: 999px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.14);
   display: flex; align-items: center; gap: 0.5rem;
-  opacity: 0; pointer-events: none;
-  transition: opacity .16s ease, transform .18s ease;
+  opacity: 0; pointer-events: none; visibility: hidden;
+  transition: opacity .16s ease, transform .18s ease, visibility 0s linear .18s;
   z-index: 20;
 }
 .volume-wrap:hover .volume-popup,
-.volume-wrap:focus-within .volume-popup {
-  opacity: 1; pointer-events: auto;
+.volume-wrap:focus-within .volume-popup,
+body.volume-revealed .volume-popup {
+  opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s;
   transform: translate(-50%, 0);
 }
 .volume-popup svg {
@@ -618,10 +673,7 @@ body[data-perf="on"] .reel svg { transform: none !important; }
   color: var(--grayscale-8);
   flex-shrink: 0; min-width: 1.2rem;
 }
-.playlist-tab.active .tab-index {
-  color: currentColor;
-  opacity: 0.75;
-}
+.playlist-tab.active .tab-index { color: currentColor; opacity: 0.75; }
 
 .tab-remove {
   position: absolute;
@@ -631,12 +683,17 @@ body[data-perf="on"] .reel svg { transform: none !important; }
   border-radius: 5px; border: none;
   background: transparent;
   color: inherit;
-  opacity: 0; cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  cursor: pointer;
   display: grid; place-items: center;
   transition: opacity .13s, background-color .13s;
   padding: 0;
 }
-.playlist-tab:hover .tab-remove { opacity: 0.55; }
+@media (hover: hover) {
+  .playlist-tab:hover .tab-remove { opacity: 0.55; pointer-events: auto; }
+}
+.playlist-tab:focus-within .tab-remove { opacity: 0.55; pointer-events: auto; }
 .tab-remove:hover { opacity: 1; background: rgba(0,0,0,0.08); }
 .playlist-tab.active .tab-remove:hover { background: rgba(255,255,255,0.18); }
 body[data-theme="dark"] .tab-remove:hover { background: rgba(255,255,255,0.08); }
@@ -658,7 +715,6 @@ body[data-theme="dark"] .playlist-tab.active .tab-remove:hover { background: rgb
   animation: tabDotPulse 1.6s ease-in-out infinite;
 }
 body.animations-off .playlist-tab[data-playing="true"] .tab-dot { animation: none; }
-body[data-perf="on"] .playlist-tab[data-playing="true"] .tab-dot { animation: none; }
 @keyframes tabDotPulse {
   0%, 100% { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.22); }
   50%      { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.08); }
@@ -670,13 +726,6 @@ body[data-perf="on"] .playlist-tab[data-playing="true"] .tab-dot { animation: no
 .playlist-empty strong {
   display: block; color: var(--grayscale-11);
   font-weight: 600; margin-bottom: 0.35rem; font-size: 0.85rem;
-}
-.playlist-empty code {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.72rem; padding: 1px 5px;
-  border-radius: 4px; background: var(--grayscale-2);
-  border: 1px solid var(--grayscale-3);
-  color: var(--grayscale-11);
 }
 
 .fab {
@@ -707,10 +756,16 @@ body[data-perf="on"] .playlist-tab[data-playing="true"] .tab-dot { animation: no
   fill: none; stroke: currentColor;
   stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
 }
-.fab-settings { bottom: 1.5rem; right: 1.5rem; }
+.fab-settings {
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  right: calc(1.5rem + env(safe-area-inset-right, 0px));
+}
 .fab-settings svg { transition: transform .35s cubic-bezier(0.23,1,0.32,1); }
 .fab-settings[aria-expanded="true"] svg { transform: rotate(90deg); }
-.fab-shortcuts { top: 1rem; right: 1rem; }
+.fab-shortcuts {
+  top: calc(1rem + env(safe-area-inset-top, 0px));
+  right: calc(1rem + env(safe-area-inset-right, 0px));
+}
 
 .popup {
   position: fixed;
@@ -721,13 +776,15 @@ body[data-perf="on"] .playlist-tab[data-playing="true"] .tab-dot { animation: no
   z-index: 99;
   opacity: 0;
   pointer-events: none;
-  transition: opacity .16s ease, transform .2s cubic-bezier(0.23,1,0.32,1);
+  visibility: hidden;
+  transition: opacity .16s ease, transform .2s cubic-bezier(0.23,1,0.32,1), visibility 0s linear .2s;
 }
-.popup[data-open="true"] { opacity: 1; pointer-events: auto; }
+.popup[data-open="true"] { opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s; }
 
 .shortcuts-panel {
-  top: 4.25rem; right: 1rem;
-  width: min(17rem, calc(100vw - 1.5rem));
+  top: calc(4.25rem + env(safe-area-inset-top, 0px));
+  right: calc(1rem + env(safe-area-inset-right, 0px));
+  width: min(17rem, calc(100vw - 1.5rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
   padding: 0.85rem;
   transform: translateY(-6px) scale(0.98);
   transform-origin: top right;
@@ -761,9 +818,11 @@ kbd {
 .shortcut-label { color: var(--grayscale-10); font-size: 0.78rem; text-align: right; }
 
 .settings-panel {
-  bottom: 5rem; right: 1.5rem;
-  width: min(24rem, calc(100vw - 2rem));
+  bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  right: calc(1.5rem + env(safe-area-inset-right, 0px));
+  width: min(24rem, calc(100vw - 2rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
   max-height: calc(100vh - 8rem);
+  max-height: calc(100dvh - 8rem);
   display: flex; flex-direction: column;
   transform: translateY(10px) scale(0.97);
   transform-origin: bottom right;
@@ -818,6 +877,26 @@ kbd {
   padding: 0 0 0.6rem; font-style: italic;
 }
 .setting-sub { padding-left: 0.6rem; border-left: 2px solid var(--grayscale-3); margin-top: 0.3rem; }
+
+/* Device info pills in settings */
+.device-pill {
+  display: inline-flex; align-items: center;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.68rem; font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--grayscale-3);
+  color: var(--grayscale-11);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+body[data-theme="dark"] .device-pill { background: var(--grayscale-4); color: var(--grayscale-12); }
+.device-pill.ok { background: rgba(34,197,94,0.14); color: #15803d; }
+body[data-theme="dark"] .device-pill.ok { background: rgba(34,197,94,0.18); color: #4ade80; }
+.device-pill.warn { background: rgba(234,179,8,0.16); color: #a16207; }
+body[data-theme="dark"] .device-pill.warn { background: rgba(234,179,8,0.18); color: #facc15; }
 
 .seg {
   display: inline-flex; padding: 2px; gap: 2px;
@@ -949,7 +1028,6 @@ body[data-theme="dark"] .act-btn.danger:hover { background: rgba(248,113,113,0.1
   animation: keyListening 1.2s ease-in-out infinite;
 }
 body.animations-off .key-badge.listening { animation: none; }
-body[data-perf="on"] .key-badge.listening { animation: none; }
 @keyframes keyListening {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.55; }
@@ -992,18 +1070,37 @@ body[data-theme="dark"] .perf-promo { background: var(--grayscale-3); border-col
 .perf-promo-title { font-size: 0.82rem; font-weight: 600; color: var(--grayscale-12); margin-bottom: 0.15rem; }
 .perf-promo-desc { font-size: 0.72rem; line-height: 1.4; color: var(--grayscale-9); }
 
-body[data-perf="on"] .gradient-bg { animation: none !important; }
-body[data-perf="on"] .reel svg { transform: none !important; }
-body[data-perf="on"] .playlist-tab[data-playing="true"] .tab-dot { animation: none !important; }
-body[data-perf="on"] .key-badge.listening { animation: none !important; }
-body[data-perf="on"] .settings-panel,
-body[data-perf="on"] .shortcuts-panel {
+body[data-perf="on"] .gradient-bg { display: none !important; }
+body[data-perf="on"] .cassette-texture,
+body[data-perf="on"] .reel-window-texture { display: none !important; }
+body[data-perf="on"] .cassette { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
+body[data-perf="on"] .player-shell,
+body[data-perf="on"] .playlist-shell,
+body[data-perf="on"] .popup,
+body[data-perf="on"] .fab,
+body[data-perf="on"] .mini-player,
+body[data-perf="on"] .screw,
+body[data-perf="on"] .ctrl-btn,
+body[data-perf="on"] .mini-btn,
+body[data-perf="on"] .corner-btn,
+body[data-perf="on"] .progress-thumb,
+body[data-perf="on"] .label,
+body[data-perf="on"] .switch span::before,
+body[data-perf="on"] kbd {
+  box-shadow: none !important;
+}
+body[data-perf="on"] .volume-popup {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-  background: var(--grayscale-1) !important;
+  background: rgba(20, 20, 20, 0.96) !important;
 }
+body[data-perf="on"] .tape-bundle,
+body[data-perf="on"] .reel svg { will-change: auto !important; }
+body[data-perf="on"] .reel svg { transform: none !important; }
+body[data-perf="on"] .gradient-bg,
+body[data-perf="on"] .playlist-tab[data-playing="true"] .tab-dot,
+body[data-perf="on"] .key-badge.listening { animation: none !important; }
 body[data-perf="on"] * { transition-duration: 0.05s !important; }
-body[data-perf="on"] .gradient-bg { transition-duration: 0.4s !important; }
 
 @media (prefers-reduced-motion: reduce) {
   .gradient-bg,
@@ -1014,7 +1111,8 @@ body[data-perf="on"] .gradient-bg { transition-duration: 0.4s !important; }
 
 .mini-player {
   position: fixed;
-  bottom: 1.5rem; left: 1.5rem;
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  left: calc(1.5rem + env(safe-area-inset-left, 0px));
   display: flex; align-items: center; gap: 0.55rem;
   padding: 0.4rem 0.5rem 0.4rem 0.4rem;
   background: var(--grayscale-1);
@@ -1079,9 +1177,145 @@ body.minimized .player-shell,
 body.minimized .playlist-shell { display: none; }
 
 audio { display: none; }
+
+/* ═══════════════════════════════════════════════════════════
+   TOUCH / POINTER / VIEWPORT ADAPTATIONS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Touch-pointer adjustments (any touch device) */
+@media (hover: none) and (pointer: coarse) {
+  .corner-btn { min-width: 36px; min-height: 36px; }
+  .tab-remove { min-width: 32px; min-height: 32px; }
+  .settings-close { min-width: 36px; min-height: 36px; }
+  .key-reset { min-width: 34px; min-height: 34px; }
+}
+
+/* Suppress stuck :hover styling on touch */
+@media (hover: none) {
+  .playlist-tab:hover:not(.active) {
+    background: transparent;
+    color: var(--grayscale-10);
+  }
+  .corner-btn:hover,
+  .ctrl-btn.small:hover,
+  .ctrl-btn.large:hover,
+  .mini-btn:hover,
+  .fab:hover { transform: none; }
+}
+
+/* Prevent iOS auto-zoom on input focus */
+@media (max-width: 640px) {
+  .input-row input[type="text"] { font-size: 16px; padding: 0.55rem 0.7rem; }
+}
+
+/* Phone layout */
+@media (max-width: 640px) {
+  .content { padding: 1.5rem 1rem 4rem; }
+  header { padding-left: 0; padding-right: 0; }
+  .player { min-height: 420px; padding: 2.5rem 0.75rem; }
+  .control-bar {
+    height: 20%; bottom: 2%;
+    left: 24%; right: 24%;
+    padding: 0 8%;
+  }
+  .ctrl-btn.small { width: clamp(30px, 7cqw, 38px); }
+  .ctrl-btn.large { width: clamp(40px, 9cqw, 48px); }
+  .corner-btn { width: 2.25rem; height: 2.25rem; }
+  .corner-btn svg { width: 16px; height: 16px; }
+  .fab { width: 2.85rem; height: 2.85rem; }
+  .fab svg { width: 18px; height: 18px; }
+  .mini-btn { width: 2.5rem; height: 2.5rem; }
+  .mini-btn svg { width: 16px; height: 16px; }
+  .mini-btn.mini-expand { width: 2.25rem; height: 2.25rem; }
+  .playlist-add-btn { padding: 0.5rem 0.75rem; font-size: 0.72rem; border-radius: 8px; }
+  .playlist-add-btn svg { width: 12px; height: 12px; }
+  .tab-remove { width: 2rem; height: 2rem; }
+  .tab-remove svg { width: 12px; height: 12px; }
+  .playlist-tab.has-remove { padding-right: 2.6rem; }
+  .playlist-tab { min-height: 3.25rem; }
+  .settings-close { width: 2.25rem; height: 2.25rem; }
+  .settings-close svg { width: 16px; height: 16px; }
+  .act-btn { padding: 0.55rem 0.85rem; font-size: 0.78rem; }
+  .seg-btn { padding: 0.4rem 0.75rem; font-size: 0.75rem; }
+  .switch { width: 44px; height: 24px; }
+  .switch span::before { height: 20px; width: 20px; }
+  .switch input:checked + span::before { transform: translateX(20px); }
+  .range-row input[type="range"]::-webkit-slider-thumb { width: 18px; height: 18px; margin-top: -8px; }
+  .range-row input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; }
+  .range-row input[type="range"] { height: 28px; }
+  .key-badge { font-size: 0.72rem; padding: 8px 12px; min-width: 5.5rem; }
+  .key-reset { width: 2.25rem; height: 2.25rem; }
+  .key-reset svg { width: 14px; height: 14px; }
+  .tab-meta { font-size: 0.68rem; }
+  .playlist-title { font-size: 0.72rem; }
+  .playlist-count { font-size: 0.72rem; }
+  .popup-title { font-size: 0.72rem; }
+  .settings-section-title { font-size: 0.68rem; }
+  .mini-meta { font-size: 0.62rem; }
+  .time-row { font-size: 0.8rem; }
+  .progress-thumb { width: 16px; height: 16px; }
+  .progress-slider { height: 2rem; }
+  .settings-body {
+    padding: 0.85rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Tablet layout (touch + moderate width) */
+@media (min-width: 641px) and (max-width: 1024px) and (pointer: coarse) {
+  .player { padding: 3rem 1.5rem; }
+  .ctrl-btn.small { width: clamp(28px, 6.5cqw, 36px); }
+  .ctrl-btn.large { width: clamp(36px, 8.2cqw, 48px); }
+  .corner-btn { width: 2.25rem; height: 2.25rem; }
+  .fab { width: 3rem; height: 3rem; }
+  .fab svg { width: 18px; height: 18px; }
+  .mini-btn { width: 2.75rem; height: 2.75rem; }
+  .mini-btn svg { width: 16px; height: 16px; }
+  .switch { width: 42px; height: 22px; }
+  .switch span::before { height: 18px; width: 18px; }
+  .switch input:checked + span::before { transform: translateX(20px); }
+  .tab-remove { width: 1.75rem; height: 1.75rem; }
+  .playlist-tab.has-remove { padding-right: 2.4rem; }
+}
+
+/* Landscape phones: 420px min-height would overflow the viewport */
+@media (max-height: 560px) and (orientation: landscape) {
+  .player { min-height: 300px; padding: 1.5rem 0.75rem; }
+  .player-inner { max-width: 480px; }
+}
 </style>
 </head>
-<body data-appearance="normal" data-theme="light" data-perf="off">
+<body data-appearance="normal" data-theme="light" data-perf="off" data-blur="on" data-reels="on" data-grad-anim="on" data-device="desktop" data-has-keyboard="true">
+<script>
+/* ─────────────────────────────────────────────────────────
+   Early device probe — runs before first paint to avoid FOUC.
+   Sets data-device and data-has-keyboard on <body> so CSS can
+   hide the keyboard-shortcuts UI immediately on touch devices.
+   ───────────────────────────────────────────────────────── */
+(function () {
+  var ua = navigator.userAgent || '';
+  var mtp = navigator.maxTouchPoints || 0;
+  var hasTouch = mtp > 0;
+  var sw = screen.width, sh = screen.height;
+  var minSide = Math.min(sw, sh), maxSide = Math.max(sw, sh);
+
+  // iPadOS 13+ reports as Macintosh, but always has multi-touch.
+  var isIPad = /iPad/.test(ua) || (/Macintosh/.test(ua) && mtp > 1);
+
+  var type;
+  if (isIPad) type = 'tablet';
+  else if (/Android/.test(ua)) type = (!/Mobile/.test(ua) || minSide >= 600) ? 'tablet' : 'phone';
+  else if (/iPhone|iPod|Windows Phone|BlackBerry|Opera Mini|IEMobile/.test(ua)) type = 'phone';
+  else if (hasTouch) type = minSide < 500 ? 'phone' : minSide < 900 ? 'tablet' : 'laptop';
+  else type = maxSide <= 1440 ? 'laptop' : 'desktop';
+
+  var b = document.body;
+  b.dataset.device = type;
+  // Touch-only device classes start with no physical keyboard assumed.
+  // The main script will flip this to "true" the moment a real key is pressed.
+  var mobile = (type === 'phone' || type === 'tablet');
+  b.dataset.hasKeyboard = mobile ? 'false' : 'true';
+})();
+</script>
 
 <!-- Reusable SVG defs (reel spokes) — hidden, used by both reels -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -1098,6 +1332,7 @@ audio { display: none; }
 </svg>
 
 <div class="gradient-bg" id="gradientBg" aria-hidden="true"></div>
+<div class="wallpaper-bg" id="wallpaperBg" aria-hidden="true"></div>
 
 <main>
   <div class="content">
@@ -1200,7 +1435,7 @@ audio { display: none; }
                 </svg>
               </button>
               <div class="volume-wrap">
-                <button class="ctrl-btn small" id="muteBtn" aria-label="Mute">
+                <button class="ctrl-btn small" id="muteBtn" aria-label="Mute" title="Tap to mute · long-press for volume">
                   <svg id="volumeIcon" viewBox="0 0 256 256" aria-hidden="true">
                     <path d="M157.27,21.22a12,12,0,0,0-12.64,1.31L75.88,76H32A20,20,0,0,0,12,96v64a20,20,0,0,0,20,20H75.88l68.75,53.47A12,12,0,0,0,164,224V32A12,12,0,0,0,157.27,21.22ZM36,100H68v56H36Zm104,99.46L92,162.13V93.87l48-37.33ZM212,128a44,44,0,0,1-11,29.11,12,12,0,1,1-18-15.88,20,20,0,0,0,0-26.43,12,12,0,0,1,18-15.86A43.94,43.94,0,0,1,212,128Zm40,0a83.87,83.87,0,0,1-21.39,56,12,12,0,0,1-17.89-16,60,60,0,0,0,0-80,12,12,0,1,1,17.88-16A83.87,83.87,0,0,1,252,128Z"/>
                   </svg>
@@ -1208,7 +1443,7 @@ audio { display: none; }
                     <path d="M52.44,36A12,12,0,0,0,32,44L67.12,76H32A20,20,0,0,0,12,96v64a20,20,0,0,0,20,20H75.88l68.75,53.47A12,12,0,0,0,164,224V164l47.56,43.56A12,12,0,0,0,228,188L52.44,36ZM140,188.13L92,162.13V93.87l48-37.33Zm84.56-12.44-17.89-16.38A60,60,0,0,0,212,128a44,44,0,0,0-11-29.11,12,12,0,1,0-18,15.88,20,20,0,0,1,3.55,11.23L161.78,104a43.94,43.94,0,0,0,6.22,9.53,12,12,0,0,1,0,15.86,19.93,19.93,0,0,1-2.22,2.1l17.9,16.38A44,44,0,0,0,224.56,175.69Z"/>
                   </svg>
                 </button>
-                <div class="volume-popup">
+                <div class="volume-popup" role="group" aria-label="Volume control">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M11 5 6 9H2v6h4l5 4V5z"/>
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
@@ -1291,6 +1526,29 @@ audio { display: none; }
   </div>
   <div class="settings-body">
 
+    <!-- ══ Device (auto-detected) ══ -->
+    <section class="setting-section">
+      <h3 class="setting-section-title">Device</h3>
+      <div class="setting-row">
+        <span class="setting-row-label">Detected as</span>
+        <span class="device-pill" id="devicePill">Desktop</span>
+      </div>
+      <p class="setting-desc" id="deviceDesc">Desktop layout. Full keyboard shortcut support and hover effects.</p>
+      <div class="setting-row">
+        <span class="setting-row-label">Touch input</span>
+        <span class="device-pill" id="touchPill">No</span>
+      </div>
+      <div class="setting-row">
+        <span class="setting-row-label">Physical keyboard</span>
+        <span class="device-pill" id="kbPill">Available</span>
+      </div>
+      <div class="setting-row">
+        <span class="setting-row-label">Force keyboard shortcuts</span>
+        <label class="switch"><input type="checkbox" id="optForceKeyboard"><span></span></label>
+      </div>
+      <p class="setting-desc">Keyboard shortcuts appear automatically when a physical keyboard is used. Enable to force them on regardless.</p>
+    </section>
+
     <section class="setting-section">
       <h3 class="setting-section-title">Appearance</h3>
       <div class="setting-row">
@@ -1370,7 +1628,7 @@ audio { display: none; }
       </div>
     </section>
 
-    <section class="setting-section">
+    <section class="setting-section setting-section-shortcuts">
       <h3 class="setting-section-title">Shortcuts</h3>
       <div id="shortcutEditor"></div>
       <div class="setting-row" style="justify-content: flex-end; padding-top: 0.6rem;">
@@ -1407,7 +1665,7 @@ audio { display: none; }
       <div class="perf-promo">
         <div class="perf-promo-body">
           <div class="perf-promo-title">Performance mode</div>
-          <div class="perf-promo-desc">Turns off animations, blur and background effects. Playback stays fully functional.</div>
+          <div class="perf-promo-desc">Disables all decorative paint work: noise textures, shadows, blur, gradient background, reel spin. The render loop drops to 1 Hz. Playback stays fully functional.</div>
         </div>
         <label class="switch" style="margin-top: 2px;"><input type="checkbox" id="optPerfMode"><span></span></label>
       </div>
@@ -1472,6 +1730,7 @@ audio { display: none; }
     shortcuts: { ...DEFAULT_SHORTCUTS },
     playback: { shuffle: false, repeat: 'off', autoplayNext: true, rememberPosition: false },
     performance: { enabled: false, animations: true, reels: true, blur: true },
+    device: { forceKeyboard: false },
     volume: 0.78,
     muted: false,
     trackIndex: 0,
@@ -1492,15 +1751,25 @@ audio { display: none; }
     return out;
   }
 
+  const clone = (o) => JSON.parse(JSON.stringify(o));
   let settings;
   try {
     const raw = localStorage.getItem('cassette:settings');
-    settings = raw ? deepMerge(DEFAULT_SETTINGS, JSON.parse(raw)) : { ...DEFAULT_SETTINGS };
+    settings = raw ? deepMerge(clone(DEFAULT_SETTINGS), JSON.parse(raw)) : clone(DEFAULT_SETTINGS);
   } catch {
-    settings = { ...DEFAULT_SETTINGS };
+    settings = clone(DEFAULT_SETTINGS);
   }
 
+  let _saveTimer = 0;
   function saveSettings() {
+    if (_saveTimer) return;
+    _saveTimer = setTimeout(() => {
+      _saveTimer = 0;
+      try { localStorage.setItem('cassette:settings', JSON.stringify(settings)); } catch {}
+    }, 200);
+  }
+  function flushSave() {
+    if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = 0; }
     try { localStorage.setItem('cassette:settings', JSON.stringify(settings)); } catch {}
   }
 
@@ -1613,6 +1882,12 @@ audio { display: none; }
   const settingsPanel = $('settingsPanel');
   const settingsClose = $('settingsClose');
 
+  const devicePill = $('devicePill');
+  const deviceDesc = $('deviceDesc');
+  const touchPill = $('touchPill');
+  const kbPill = $('kbPill');
+  const optForceKeyboard = $('optForceKeyboard');
+
   const appearanceDesc = $('appearanceDesc');
   const gradientOpts = $('gradientOpts');
   const wallpaperOpts = $('wallpaperOpts');
@@ -1641,7 +1916,11 @@ audio { display: none; }
   const optBlur = $('optBlur');
   const resetAllSettings = $('resetAllSettings');
   const volumePopup = $('volumePopup');
-  const gradientBg = $('gradientBg');
+  const wallpaperBg = $('wallpaperBg');
+  const reelSvgs = cassette.querySelectorAll('.reel svg');
+  const tapeL = cassette.querySelector('.tape-bundle.left');
+  const tapeR = cassette.querySelector('.tape-bundle.right');
+  let sliderW = 0;
 
   const minimizeBtn = $('minimizeBtn');
   const miniPlayer = $('miniPlayer');
@@ -1673,12 +1952,23 @@ audio { display: none; }
   let duration = 0;
   let isSeeking = false;
   let wasPlayingBeforeSeek = false;
-  let rafId = null;
-  let restartRafId = null;
+  let restartRafId = 0;
   let isSwitching = false;
   let listeningAction = null;
   let shortcutKeydownHandler = null;
   let savedPosition = null;
+
+  let playlistTabEls = [];
+  let _lastPct = -1;
+  let _lastElapsedSec = -1;
+  let _trackGen = 0;
+
+  /* ───── Device + keyboard detection state ───── */
+  const DEVICE_TYPE = document.body.dataset.device || 'desktop';
+  const IS_MOBILE_CLASS = DEVICE_TYPE === 'phone' || DEVICE_TYPE === 'tablet';
+  const HAS_TOUCH = (navigator.maxTouchPoints || 0) > 0;
+  let physicalKeyboardDetected = !IS_MOBILE_CLASS;
+  let keyboardProbeAttached = false;
 
   function formatTime(s) {
     if (!isFinite(s) || s < 0) return '0:00';
@@ -1686,15 +1976,81 @@ audio { display: none; }
     const r = Math.floor(s % 60);
     return m + ':' + (r < 10 ? '0' : '') + r;
   }
-  function formatDuration(s) {
-    if (!isFinite(s) || s < 0) return 'PT0S';
-    return 'PT' + Math.floor(s) + 'S';
-  }
   function easeInOutCubic(p) {
     return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
   }
   function currentTrack() { return TRACKS[currentIndex]; }
   function pad2(n) { return String(n).padStart(2, '0'); }
+
+  /* ───── Physical keyboard probe ──────────────────────────
+     No native API exists for "is a hardware keyboard attached".
+     The reliable heuristic: any trusted keydown that isn't from
+     a text field and isn't a lone modifier key implies hardware.
+     Mobile OSKs only fire keydown while a text field is focused,
+     so filtering those out avoids false positives. */
+  function attachKeyboardProbe() {
+    if (keyboardProbeAttached) return;
+    keyboardProbeAttached = true;
+
+    const MOD_KEYS = ['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'OS', 'Fn', 'Hyper'];
+
+    const probe = (e) => {
+      if (!e.isTrusted) return;
+      if (physicalKeyboardDetected) {
+        document.removeEventListener('keydown', probe, true);
+        return;
+      }
+      const t = e.target;
+      const inField = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+      if (inField) return;
+      if (MOD_KEYS.indexOf(e.key) !== -1) return;
+      if (e.keyCode === 229) return; // IME composition
+      physicalKeyboardDetected = true;
+      updateKeyboardAvailability();
+      document.removeEventListener('keydown', probe, true);
+    };
+    document.addEventListener('keydown', probe, true);
+  }
+
+  function updateKeyboardAvailability() {
+    const forced = !!settings.device.forceKeyboard;
+    const hasKb = !IS_MOBILE_CLASS || physicalKeyboardDetected || forced;
+    document.body.dataset.hasKeyboard = hasKb ? 'true' : 'false';
+    if (!hasKb) {
+      // Force-close the shortcuts panel if it was open
+      shortcutsPanel.setAttribute('data-open', 'false');
+      shortcutsBtn.setAttribute('aria-expanded', 'false');
+    }
+    updateDeviceUI();
+  }
+
+  function updateDeviceUI() {
+    if (!devicePill) return;
+    const labels = { phone: 'Phone', tablet: 'Tablet', laptop: 'Laptop', desktop: 'Desktop' };
+    devicePill.textContent = labels[DEVICE_TYPE] || 'Unknown';
+
+    const descs = {
+      phone:   'Phone layout. Larger tap targets, no hover effects, keyboard shortcuts hidden unless a physical keyboard is used.',
+      tablet:  'Tablet layout. Touch-optimised controls. Connect a keyboard to unlock shortcuts.',
+      laptop:  'Laptop layout. Full keyboard shortcut support.',
+      desktop: 'Desktop layout. Full keyboard shortcut support and hover effects.',
+    };
+    deviceDesc.textContent = descs[DEVICE_TYPE] || '';
+
+    touchPill.textContent = HAS_TOUCH ? 'Yes' : 'No';
+    touchPill.classList.toggle('ok', HAS_TOUCH);
+
+    let kbText, kbClass;
+    if (!IS_MOBILE_CLASS) { kbText = 'Available'; kbClass = 'ok'; }
+    else if (physicalKeyboardDetected) { kbText = 'Detected'; kbClass = 'ok'; }
+    else if (settings.device.forceKeyboard) { kbText = 'Forced on'; kbClass = 'warn'; }
+    else { kbText = 'Not detected'; kbClass = 'warn'; }
+    kbPill.textContent = kbText;
+    kbPill.classList.remove('ok', 'warn');
+    kbPill.classList.add(kbClass);
+
+    optForceKeyboard.checked = !!settings.device.forceKeyboard;
+  }
 
   /* ───── palette ───── */
   function generatePalette() {
@@ -1742,6 +2098,9 @@ audio { display: none; }
     document.body.dataset.appearance = settings.appearance;
     document.body.dataset.theme = settings.theme;
     document.body.dataset.perf = settings.performance.enabled ? 'on' : 'off';
+    document.body.dataset.blur = settings.performance.blur ? 'on' : 'off';
+    document.body.dataset.reels = settings.performance.reels ? 'on' : 'off';
+    document.body.dataset.gradAnim = settings.gradient.animated ? 'on' : 'off';
     document.body.classList.toggle('animations-off', !settings.performance.animations);
 
     document.documentElement.style.setProperty('--grad-blur', settings.gradient.blur + 'px');
@@ -1757,14 +2116,8 @@ audio { display: none; }
       applyPalette(null);
     }
 
-    gradientBg.style.animationPlayState = settings.gradient.animated ? 'running' : 'paused';
-    gradientBg.style.animation = settings.gradient.animated ? '' : 'none';
-
-    if (settings.appearance === 'wallpaper' && settings.wallpaper.url) {
-      document.body.style.backgroundImage = `url("${settings.wallpaper.url}")`;
-    } else {
-      document.body.style.backgroundImage = '';
-    }
+    wallpaperBg.style.backgroundImage =
+      (settings.appearance === 'wallpaper' && settings.wallpaper.url) ? `url("${settings.wallpaper.url}")` : '';
 
     gradientOpts.style.display = settings.appearance === 'gradient' ? '' : 'none';
     wallpaperOpts.style.display = settings.appearance === 'wallpaper' ? '' : 'none';
@@ -1804,35 +2157,49 @@ audio { display: none; }
     optReels.checked = settings.performance.reels;
     optBlur.checked = settings.performance.blur;
 
-    document.querySelectorAll('.settings-panel, .shortcuts-panel').forEach(el => {
-      el.style.backdropFilter = settings.performance.blur ? '' : 'none';
-      el.style.webkitBackdropFilter = settings.performance.blur ? '' : 'none';
-    });
-
     audio.volume = settings.volume;
     audio.muted = settings.muted;
     volumePopup.value = settings.muted ? 0 : settings.volume;
+
+    updateKeyboardAvailability();
   }
 
   function updateVisuals(time) {
     const progress = duration > 0 ? Math.min(Math.max(time / duration, 0), 1) : 0;
-    if (settings.performance.reels && settings.performance.animations) {
-      cassette.style.setProperty('--reel-rotation', ((time * 300) % 360) + 'deg');
+    const pct = Math.round(progress * 1000);
+
+    if (pct !== _lastPct) {
+      _lastPct = pct;
+      indicator.style.transform = 'scaleX(' + pct / 1000 + ')';
+      thumb.style.transform = 'translate(calc(-50% + ' + (pct / 1000) * sliderW + 'px), -50%)';
+      slider.setAttribute('aria-valuenow', Math.round(pct / 10));
+      slider.setAttribute('aria-valuetext', formatTime(time) + ' of ' + formatTime(duration));
     }
-    cassette.style.setProperty('--left-tape-scale', String(1 - progress * 0.4));
-    cassette.style.setProperty('--right-tape-scale', String(0.6 + progress * 0.4));
-    indicator.style.width = (progress * 100) + '%';
-    thumb.style.left = (progress * 100) + '%';
-    slider.setAttribute('aria-valuenow', Math.round(progress * 100));
-    slider.setAttribute('aria-valuetext', formatTime(time) + ' of ' + formatTime(duration));
+
+    if (settings.performance.enabled) return;
+
+    if (settings.performance.reels && settings.performance.animations) {
+      const r = 'rotate(' + ((time * 300) % 360).toFixed(1) + 'deg)';
+      reelSvgs[0].style.transform = r;
+      reelSvgs[1].style.transform = r;
+    }
+    tapeL.style.transform = 'translate(-50%, -50%) scale(' + (1 - progress * 0.4).toFixed(3) + ')';
+    tapeR.style.transform = 'translate(-50%, -50%) scale(' + (0.6 + progress * 0.4).toFixed(3) + ')';
   }
 
   function updateTimeDisplay() {
     const t = audio.currentTime;
-    elapsed.textContent = formatTime(t);
-    elapsed.setAttribute('datetime', formatDuration(t));
+    const sec = Math.floor(t);
+    if (sec !== _lastElapsedSec) {
+      _lastElapsedSec = sec;
+      elapsed.textContent = formatTime(t);
+      elapsed.setAttribute('datetime', 'PT' + sec + 'S');
+    }
+  }
+
+  function setTotalTime() {
     total.textContent = formatTime(duration);
-    total.setAttribute('datetime', formatDuration(duration));
+    total.setAttribute('datetime', 'PT' + Math.floor(duration) + 'S');
   }
 
   function setSliderDisabled(disabled) {
@@ -1847,9 +2214,11 @@ audio { display: none; }
     pauseIcon.style.display = playing ? 'block' : 'none';
     playBtn.setAttribute('aria-label', (playing ? 'Pause' : 'Play') + ' ' + (currentTrack() ? currentTrack().title : ''));
     document.body.classList.toggle('playing', playing);
-    document.querySelectorAll('.playlist-tab').forEach((el, i) => {
-      el.dataset.playing = (i === currentIndex && playing) ? 'true' : 'false';
-    });
+
+    for (let i = 0; i < playlistTabEls.length; i++) {
+      playlistTabEls[i].dataset.playing = (i === currentIndex && playing) ? 'true' : 'false';
+    }
+
     miniPlayIcon.style.display = playing ? 'none' : 'block';
     miniPauseIcon.style.display = playing ? 'block' : 'none';
   }
@@ -1888,15 +2257,45 @@ audio { display: none; }
     miniMeta.textContent = [t.archive, t.catalogue].filter(Boolean).join(' · ') || '—';
   }
 
-  function tick() {
-    if (!isSeeking && !isSwitching) {
-      updateVisuals(audio.currentTime);
-      updateTimeDisplay();
-      restartBtn.disabled = duration <= 0 || audio.currentTime <= 0;
+  const NORMAL_TICK_MS = 1000 / 30;
+  const PERF_TICK_MS = 1000;
+
+  let rafId = 0;
+  let perfTimerId = 0;
+  let _lastTickTs = 0;
+
+  function doTickWork() {
+    if (isSeeking || isSwitching) return;
+    updateVisuals(audio.currentTime);
+    updateTimeDisplay();
+    restartBtn.disabled = duration <= 0 || audio.currentTime <= 0;
+  }
+
+  function rafLoop(ts) {
+    if (ts - _lastTickTs >= NORMAL_TICK_MS) {
+      _lastTickTs = ts;
+      doTickWork();
     }
     if (!audio.paused && !audio.ended) {
-      rafId = requestAnimationFrame(tick);
+      rafId = requestAnimationFrame(rafLoop);
+    } else {
+      rafId = 0;
     }
+  }
+
+  function startTick() {
+    stopTick();
+    if (settings.performance.enabled) {
+      perfTimerId = window.setInterval(doTickWork, PERF_TICK_MS);
+    } else {
+      _lastTickTs = 0;
+      rafId = requestAnimationFrame(rafLoop);
+    }
+  }
+
+  function stopTick() {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+    if (perfTimerId) { clearInterval(perfTimerId); perfTimerId = 0; }
   }
 
   function togglePlay() {
@@ -1913,13 +2312,14 @@ audio { display: none; }
 
   function doRestart() {
     if (duration <= 0) return;
-    if (restartRafId) { cancelAnimationFrame(restartRafId); restartRafId = null; }
+    if (restartRafId) { cancelAnimationFrame(restartRafId); restartRafId = 0; }
     const wasPlaying = !audio.paused;
     const from = audio.currentTime;
     if (wasPlaying) audio.pause();
 
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
-                   !settings.performance.animations;
+                   !settings.performance.animations ||
+                   settings.performance.enabled;
     if (from <= 0 || reduce) {
       audio.currentTime = 0;
       updateVisuals(0); updateTimeDisplay();
@@ -1937,7 +2337,7 @@ audio { display: none; }
       if (p < 1) {
         restartRafId = requestAnimationFrame(step);
       } else {
-        restartRafId = null;
+        restartRafId = 0;
         audio.currentTime = 0;
         updateVisuals(0); updateTimeDisplay();
         if (wasPlaying) audio.play().catch(() => {});
@@ -1946,6 +2346,55 @@ audio { display: none; }
     restartRafId = requestAnimationFrame(step);
   }
   restartBtn.addEventListener('click', doRestart);
+
+  /* ───── Mute + touch-friendly volume reveal ───────
+     Desktop: hover reveals the slider (pure CSS).
+     Touch:   long-press (450 ms) reveals it for 4 s.
+     The click is suppressed on long-press so mute doesn't toggle. */
+  const LONG_PRESS_MS = 450;
+  const VOLUME_REVEAL_MS = 4000;
+  let _longPressTimer = 0;
+  let _suppressNextMuteClick = false;
+  let _volumeRevealTimer = 0;
+
+  function revealVolume(ms) {
+    document.body.classList.add('volume-revealed');
+    clearTimeout(_volumeRevealTimer);
+    _volumeRevealTimer = setTimeout(() => {
+      document.body.classList.remove('volume-revealed');
+      _volumeRevealTimer = 0;
+    }, ms);
+  }
+  function hideVolume() {
+    if (_volumeRevealTimer) { clearTimeout(_volumeRevealTimer); _volumeRevealTimer = 0; }
+    document.body.classList.remove('volume-revealed');
+  }
+
+  muteBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+  muteBtn.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse') return;
+    clearTimeout(_longPressTimer);
+    _longPressTimer = setTimeout(() => {
+      _longPressTimer = 0;
+      _suppressNextMuteClick = true;
+      revealVolume(VOLUME_REVEAL_MS);
+    }, LONG_PRESS_MS);
+  });
+  const cancelLongPress = () => {
+    if (_longPressTimer) { clearTimeout(_longPressTimer); _longPressTimer = 0; }
+  };
+  muteBtn.addEventListener('pointerup', cancelLongPress);
+  muteBtn.addEventListener('pointercancel', cancelLongPress);
+  muteBtn.addEventListener('pointerleave', cancelLongPress);
+
+  // Capture-phase guard so it runs before the normal click handler.
+  muteBtn.addEventListener('click', (e) => {
+    if (_suppressNextMuteClick) {
+      _suppressNextMuteClick = false;
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    }
+  }, true);
 
   function doMute() {
     audio.muted = !audio.muted;
@@ -1962,9 +2411,19 @@ audio { display: none; }
     settings.volume = v;
     settings.muted = audio.muted;
     saveSettings();
+    if (document.body.classList.contains('volume-revealed')) {
+      // Keep it visible while the user is actively adjusting.
+      revealVolume(VOLUME_REVEAL_MS);
+    }
   });
 
-  /* ───── mini player ───── */
+  // Tap outside to dismiss the revealed slider.
+  document.addEventListener('pointerdown', (e) => {
+    if (!document.body.classList.contains('volume-revealed')) return;
+    if (e.target.closest('.volume-wrap')) return;
+    hideVolume();
+  }, true);
+
   function placeMini(x, y) {
     const w = miniPlayer.offsetWidth || 240;
     const h = miniPlayer.offsetHeight || 56;
@@ -2031,9 +2490,8 @@ audio { display: none; }
       const y = parseFloat(miniPlayer.style.top) || 0;
       placeMini(x, y);
     }
-  });
+  }, { passive: true });
 
-  /* ───── seeking ───── */
   function pointerToProgress(e) {
     const rect = slider.getBoundingClientRect();
     const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
@@ -2044,6 +2502,7 @@ audio { display: none; }
     isSeeking = true;
     wasPlayingBeforeSeek = !audio.paused;
     if (wasPlayingBeforeSeek) audio.pause();
+    slider.addEventListener('pointermove', moveSeek);
     moveSeek(e);
   }
   function moveSeek(e) {
@@ -2056,8 +2515,10 @@ audio { display: none; }
   }
   function endSeek(e) {
     if (!isSeeking) return;
+    slider.removeEventListener('pointermove', moveSeek);
     const p = pointerToProgress(e);
     audio.currentTime = p * duration;
+    _lastElapsedSec = -1;
     updateVisuals(audio.currentTime);
     updateTimeDisplay();
     isSeeking = false;
@@ -2067,7 +2528,6 @@ audio { display: none; }
     slider.setPointerCapture(e.pointerId);
     beginSeek(e);
   });
-  slider.addEventListener('pointermove', moveSeek);
   slider.addEventListener('pointerup', endSeek);
   slider.addEventListener('pointercancel', endSeek);
   slider.addEventListener('keydown', (e) => {
@@ -2084,11 +2544,9 @@ audio { display: none; }
     updateTimeDisplay();
   });
 
-  /* ───── audio events ───── */
   audio.addEventListener('loadedmetadata', () => {
     duration = isFinite(audio.duration) ? audio.duration : 0;
-    total.textContent = formatTime(duration);
-    total.setAttribute('datetime', formatDuration(duration));
+    setTotalTime();
     setSliderDisabled(duration <= 0);
     updateVisuals(audio.currentTime);
     updateTimeDisplay();
@@ -2098,6 +2556,7 @@ audio { display: none; }
     if (settings.playback.rememberPosition && savedPosition && savedPosition.trackIndex === currentIndex) {
       const restoreTo = Math.min(savedPosition.currentTime, duration);
       audio.currentTime = restoreTo;
+      _lastElapsedSec = -1;
       updateVisuals(restoreTo);
       updateTimeDisplay();
       savedPosition = null;
@@ -2105,13 +2564,12 @@ audio { display: none; }
   });
   audio.addEventListener('play', () => {
     updatePlayUI();
-    cancelAnimationFrame(rafId);
-    tick();
+    startTick();
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
   });
   audio.addEventListener('pause', () => {
     updatePlayUI();
-    cancelAnimationFrame(rafId);
+    stopTick();
     restartBtn.disabled = audio.currentTime <= 0;
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     if (settings.playback.rememberPosition) {
@@ -2120,7 +2578,7 @@ audio { display: none; }
   });
   audio.addEventListener('ended', () => {
     updatePlayUI();
-    cancelAnimationFrame(rafId);
+    stopTick();
     updateVisuals(audio.currentTime);
     updateTimeDisplay();
     handleTrackEnded();
@@ -2140,11 +2598,20 @@ audio { display: none; }
     isSwitching = false;
   });
 
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopTick();
+    } else if (!audio.paused && !audio.ended) {
+      startTick();
+    }
+  });
+
   window.addEventListener('beforeunload', () => {
     if (settings.playback.rememberPosition && !audio.paused) {
       savedPosition = { trackIndex: currentIndex, currentTime: audio.currentTime };
       try { sessionStorage.setItem('cassette:pos', JSON.stringify(savedPosition)); } catch {}
     }
+    flushSave();
   });
   try {
     const raw = sessionStorage.getItem('cassette:pos');
@@ -2210,8 +2677,8 @@ audio { display: none; }
 
     const wasPlaying = !audio.paused && !audio.ended;
 
-    if (restartRafId) { cancelAnimationFrame(restartRafId); restartRafId = null; }
-    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    if (restartRafId) { cancelAnimationFrame(restartRafId); restartRafId = 0; }
+    stopTick();
 
     isSwitching = true;
     cassette.classList.add('switching');
@@ -2226,6 +2693,8 @@ audio { display: none; }
     syncVisiblePlaylist();
 
     duration = 0;
+    _lastPct = -1;
+    _lastElapsedSec = -1;
     audio.currentTime = 0;
     updateVisuals(0);
     updateTimeDisplay();
@@ -2237,17 +2706,18 @@ audio { display: none; }
     audio.load();
 
     if (wasPlaying || opts.autoplay === true) {
+      const gen = ++_trackGen;
       const onCanPlay = () => {
-        audio.removeEventListener('canplay', onCanPlay);
+        if (gen !== _trackGen) return;
         audio.play().catch(() => {});
       };
-      audio.addEventListener('canplay', onCanPlay);
+      audio.addEventListener('canplay', onCanPlay, { once: true });
     }
   }
 
-  /* ───── playlist ───── */
   function buildVisiblePlaylist() {
-    playlistTabs.innerHTML = '';
+    playlistTabs.textContent = '';
+    playlistTabEls = [];
     if (TRACKS.length === 0) {
       playlistTabs.innerHTML =
         '<div class="playlist-empty" style="width:100%">' +
@@ -2255,10 +2725,11 @@ audio { display: none; }
           'Click <b>Add</b> above to load songs from your device.' +
         '</div>';
     } else {
+      const frag = document.createDocumentFragment();
       TRACKS.forEach((track, i) => {
         const isUser = !!track._userAdded;
-        const btn = document.createElement('button');
-        btn.type = 'button';
+        const btn = document.createElement('div');
+        btn.tabIndex = 0;
         btn.className = 'playlist-tab' + (isUser ? ' has-remove' : '');
         btn.setAttribute('role', 'tab');
         btn.setAttribute('aria-selected', 'false');
@@ -2291,29 +2762,37 @@ audio { display: none; }
             removeUserTrack(i);
             return;
           }
-          switchTrack(i, { userInitiated: true });
+          switchTrack(i);
         });
-        playlistTabs.appendChild(btn);
+        btn.addEventListener('keydown', (e) => {
+          if (e.target !== btn) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            e.stopPropagation();
+            switchTrack(i);
+          }
+        });
+        playlistTabEls.push(btn);
+        frag.appendChild(btn);
       });
+      playlistTabs.appendChild(frag);
     }
     playlistCount.textContent = TRACKS.length + (TRACKS.length === 1 ? ' tape' : ' tapes');
   }
 
   function syncVisiblePlaylist() {
-    const items = playlistTabs.querySelectorAll('.playlist-tab');
-    items.forEach((el, i) => {
+    playlistTabEls.forEach((el, i) => {
       const active = i === currentIndex;
       el.classList.toggle('active', active);
       el.setAttribute('aria-selected', active ? 'true' : 'false');
       el.tabIndex = active ? 0 : -1;
     });
-    const activeEl = items[currentIndex];
+    const activeEl = playlistTabEls[currentIndex];
     if (activeEl && typeof activeEl.scrollIntoView === 'function') {
       activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
   }
 
-  /* ───── add songs ───── */
   addSongsBtn.addEventListener('click', () => addSongsInput.click());
 
   addSongsInput.addEventListener('change', async (e) => {
@@ -2424,7 +2903,6 @@ audio { display: none; }
     }
   }
 
-  /* ───── shortcuts UI ───── */
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -2551,7 +3029,6 @@ audio { display: none; }
     renderShortcutReference();
   });
 
-  /* ───── popups ───── */
   function togglePopup(btn, panel, forceOpen) {
     const isOpen = panel.getAttribute('data-open') === 'true';
     const open = forceOpen === undefined ? !isOpen : forceOpen;
@@ -2584,7 +3061,6 @@ audio { display: none; }
     }
   });
 
-  /* ───── appearance handlers ───── */
   document.querySelectorAll('[data-appearance-mode]').forEach(btn => {
     btn.addEventListener('click', () => {
       const mode = btn.dataset.appearanceMode;
@@ -2639,18 +3115,36 @@ audio { display: none; }
     if (e.key === 'Enter') wallpaperApply.click();
   });
   wallpaperUpload.addEventListener('click', () => wallpaperFile.click());
-  wallpaperFile.addEventListener('change', (e) => {
+  async function downscale(file, max = 1920) {
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * k);
+    c.height = Math.round(bmp.height * k);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    bmp.close();
+    return c.toDataURL('image/jpeg', 0.82);
+  }
+  function readAsDataURL(file) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+  }
+  wallpaperFile.addEventListener('change', async (e) => {
     const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      settings.wallpaper.url = reader.result;
-      settings.appearance = 'wallpaper';
-      saveSettings();
-      applySettings();
-    };
-    reader.readAsDataURL(file);
     wallpaperFile.value = '';
+    if (!file) return;
+    let url;
+    try { url = await downscale(file); }
+    catch { url = await readAsDataURL(file).catch(() => ''); }
+    if (!url) return;
+    settings.wallpaper.url = url;
+    settings.appearance = 'wallpaper';
+    saveSettings();
+    applySettings();
   });
   wallpaperClear.addEventListener('click', () => {
     settings.wallpaper.url = '';
@@ -2659,7 +3153,6 @@ audio { display: none; }
     applySettings();
   });
 
-  /* ───── playback handlers ───── */
   optShuffle.addEventListener('change', () => {
     settings.playback.shuffle = optShuffle.checked;
     saveSettings();
@@ -2680,11 +3173,11 @@ audio { display: none; }
     saveSettings();
   });
 
-  /* ───── performance handlers ───── */
   optPerfMode.addEventListener('change', () => {
     settings.performance.enabled = optPerfMode.checked;
     saveSettings();
     applySettings();
+    if (!audio.paused && !audio.ended) startTick();
   });
   optAnimations.addEventListener('change', () => {
     settings.performance.animations = optAnimations.checked;
@@ -2702,19 +3195,25 @@ audio { display: none; }
     applySettings();
   });
 
+  optForceKeyboard.addEventListener('change', () => {
+    settings.device.forceKeyboard = optForceKeyboard.checked;
+    saveSettings();
+    updateKeyboardAvailability();
+  });
+
   resetAllSettings.addEventListener('click', () => {
     if (!confirm('Reset every setting to defaults? This clears appearance, theme, shortcuts, playback and performance preferences.')) return;
     settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-    saveSettings();
+    flushSave();
     applySettings();
     renderShortcutReference();
     renderShortcutEditor();
     try { sessionStorage.removeItem('cassette:pos'); } catch {}
     savedPosition = null;
     setMinimized(false);
+    if (!audio.paused && !audio.ended) startTick();
   });
 
-  /* ───── single global keydown listener ───── */
   function matchesCombo(e, combo) {
     if (!combo) return false;
     const parts = combo.split('+');
@@ -2737,7 +3236,6 @@ audio { display: none; }
   document.addEventListener('keydown', (e) => {
     if (listeningAction) return;
 
-    // Escape closes any open panels
     if (e.key === 'Escape') {
       if (settingsPanel.getAttribute('data-open') === 'true') {
         togglePopup(settingsBtn, settingsPanel, false);
@@ -2750,7 +3248,6 @@ audio { display: none; }
       return;
     }
 
-    // Playback shortcuts — skip if focus is inside an input or the slider
     const tag = (e.target && e.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
     if (document.activeElement === slider && SLIDER_KEYS.includes(e.key)) return;
@@ -2781,15 +3278,19 @@ audio { display: none; }
         const idx = i - 1;
         if (idx < TRACKS.length) {
           e.preventDefault();
-          switchTrack(idx, { userInitiated: true });
+          switchTrack(idx);
         }
         return;
       }
     }
   });
 
-  /* ───── init ───── */
   async function init() {
+    new ResizeObserver(() => {
+      sliderW = slider.clientWidth;
+      _lastPct = -1;
+      updateVisuals(audio.currentTime);
+    }).observe(slider);
     await loadUserTracks();
     buildVisiblePlaylist();
     applySettings();
@@ -2801,6 +3302,10 @@ audio { display: none; }
     setSliderDisabled(true);
 
     setMinimized(!!settings.minimized);
+
+    // Only attach the physical-keyboard probe on mobile-class devices —
+    // laptops and desktops already have a keyboard by definition.
+    if (IS_MOBILE_CLASS) attachKeyboardProbe();
 
     const startIdx = Math.max(0, Math.min(TRACKS.length - 1, settings.trackIndex | 0));
     if (TRACKS.length > 0) {
