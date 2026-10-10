@@ -6,7 +6,7 @@
 <title>Cassette Audio Player | bon</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Pirata+One&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Pirata+One&display=swap" rel="stylesheet">
 <style>
 :root {
   --grayscale-1:  #ffffff;
@@ -40,7 +40,9 @@
   --grad-2: #3b82f6;
   --grad-3: #14b8a6;
   --grad-blur: 70px;
-  --wall-dim: 0;
+
+  /* SVG noise texture — shared by cassette shell and reel window */
+  --noise-texture: url("data:image/svg+xml,%3Csvg width='180' height='180' viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 body[data-theme="dark"] {
@@ -113,17 +115,6 @@ body[data-perf="on"] .gradient-bg { animation: none; }
   100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
 }
 @media (prefers-reduced-motion: reduce) { .gradient-bg { animation: none; } }
-
-.wallpaper-dim {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: #000;
-  opacity: 0;
-  transition: opacity .3s;
-}
-body[data-appearance="wallpaper"] .wallpaper-dim { opacity: var(--wall-dim); }
 
 main { max-width: 56rem; margin: 0 auto; position: relative; z-index: 1; }
 .content { padding: 2rem 2rem 4rem; }
@@ -217,7 +208,7 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
 .cassette-texture {
   position: absolute; inset: 0; pointer-events: none;
   mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg width='180' height='180' viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: var(--noise-texture);
 }
 
 .screw {
@@ -317,7 +308,7 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
 .reel-window-texture {
   position: absolute; inset: 0;
   opacity: 0.25; mix-blend-mode: multiply; pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='180' height='180' viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: var(--noise-texture);
 }
 .tape-well {
   position: absolute; z-index: 2;
@@ -505,7 +496,6 @@ body[data-perf="on"] .reel svg { transform: none !important; }
   background: #fff; border: 2px solid rgba(0,0,0,0.2); cursor: pointer;
 }
 
-/* Playlist / storage */
 .playlist-shell {
   margin-top: 1rem;
   border-radius: 16px;
@@ -689,7 +679,6 @@ body[data-perf="on"] .playlist-tab[data-playing="true"] .tab-dot { animation: no
   color: var(--grayscale-11);
 }
 
-/* FABs */
 .fab {
   position: fixed;
   width: 2.75rem; height: 2.75rem;
@@ -723,7 +712,6 @@ body[data-perf="on"] .playlist-tab[data-playing="true"] .tab-dot { animation: no
 .fab-settings[aria-expanded="true"] svg { transform: rotate(90deg); }
 .fab-shortcuts { top: 1rem; right: 1rem; }
 
-/* Popups */
 .popup {
   position: fixed;
   background: var(--grayscale-1);
@@ -1024,7 +1012,6 @@ body[data-perf="on"] .gradient-bg { transition-duration: 0.4s !important; }
   .reel svg { transform: none !important; }
 }
 
-/* MINI PLAYER */
 .mini-player {
   position: fixed;
   bottom: 1.5rem; left: 1.5rem;
@@ -1096,8 +1083,21 @@ audio { display: none; }
 </head>
 <body data-appearance="normal" data-theme="light" data-perf="off">
 
+<!-- Reusable SVG defs (reel spokes) — hidden, used by both reels -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="reel-spokes">
+      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(0 50 50)"/>
+      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(60 50 50)"/>
+      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(120 50 50)"/>
+      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(180 50 50)"/>
+      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(240 50 50)"/>
+      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(300 50 50)"/>
+    </g>
+  </defs>
+</svg>
+
 <div class="gradient-bg" id="gradientBg" aria-hidden="true"></div>
-<div class="wallpaper-dim" id="wallpaperDim" aria-hidden="true"></div>
 
 <main>
   <div class="content">
@@ -1153,24 +1153,14 @@ audio { display: none; }
                   <div class="reel left">
                     <svg viewBox="0 0 100 100" aria-hidden="true">
                       <circle cx="50" cy="50" r="48" fill="#ffffff"/>
-                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(0 50 50)"/>
-                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(60 50 50)"/>
-                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(120 50 50)"/>
-                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(180 50 50)"/>
-                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(240 50 50)"/>
-                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(300 50 50)"/>
+                      <use href="#reel-spokes"/>
                       <circle cx="50" cy="50" r="48" fill="none" stroke="#1b1a18" stroke-width="3"/>
                     </svg>
                   </div>
                   <div class="reel right">
                     <svg viewBox="0 0 100 100" aria-hidden="true">
                       <circle cx="50" cy="50" r="48" fill="#ffffff"/>
-                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(0 50 50)"/>
-                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(60 50 50)"/>
-                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(120 50 50)"/>
-                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(180 50 50)"/>
-                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(240 50 50)"/>
-                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(300 50 50)"/>
+                      <use href="#reel-spokes"/>
                       <circle cx="50" cy="50" r="48" fill="none" stroke="#1b1a18" stroke-width="3"/>
                     </svg>
                   </div>
@@ -1368,13 +1358,6 @@ audio { display: none; }
             <button class="act-btn danger" id="wallpaperClear" type="button">Clear</button>
           </div>
         </div>
-        <div class="setting-row">
-          <span class="setting-row-label">Dim overlay</span>
-          <div class="range-row" style="flex:1; max-width: 12rem;">
-            <input type="range" id="wallpaperDim" min="0" max="0.8" step="0.05" value="0">
-            <span class="range-value" id="wallpaperDimVal">0%</span>
-          </div>
-        </div>
         <input type="file" id="wallpaperFile" accept="image/*" hidden>
       </div>
 
@@ -1485,7 +1468,7 @@ audio { display: none; }
     appearance: 'normal',
     theme: 'light',
     gradient: { animated: true, blur: 70, palette: null },
-    wallpaper: { url: '', dim: 0 },
+    wallpaper: { url: '' },
     shortcuts: { ...DEFAULT_SHORTCUTS },
     playback: { shuffle: false, repeat: 'off', autoplayNext: true, rememberPosition: false },
     performance: { enabled: false, animations: true, reels: true, blur: true },
@@ -1521,7 +1504,7 @@ audio { display: none; }
     try { localStorage.setItem('cassette:settings', JSON.stringify(settings)); } catch {}
   }
 
-  /* IndexedDB helpers */
+  /* ───── IndexedDB ───── */
   const IDB_NAME = 'cassette-db';
   const IDB_STORE = 'user-songs';
   let _dbPromise = null;
@@ -1594,6 +1577,7 @@ audio { display: none; }
     return String(Math.floor(Math.random() * 900000) + 100000);
   }
 
+  /* ───── DOM refs ───── */
   const $ = (id) => document.getElementById(id);
   const audio = $('audio');
   const cassette = $('cassette');
@@ -1645,8 +1629,6 @@ audio { display: none; }
   const wallpaperApply = $('wallpaperApply');
   const wallpaperUpload = $('wallpaperUpload');
   const wallpaperClear = $('wallpaperClear');
-  const wallpaperDim = $('wallpaperDim');
-  const wallpaperDimVal = $('wallpaperDimVal');
   const wallpaperFile = $('wallpaperFile');
   const shortcutEditor = $('shortcutEditor');
   const resetAllShortcuts = $('resetAllShortcuts');
@@ -1714,6 +1696,7 @@ audio { display: none; }
   function currentTrack() { return TRACKS[currentIndex]; }
   function pad2(n) { return String(n).padStart(2, '0'); }
 
+  /* ───── palette ───── */
   function generatePalette() {
     const baseHue = Math.floor(Math.random() * 360);
     const mode = Math.floor(Math.random() * 3);
@@ -1762,7 +1745,6 @@ audio { display: none; }
     document.body.classList.toggle('animations-off', !settings.performance.animations);
 
     document.documentElement.style.setProperty('--grad-blur', settings.gradient.blur + 'px');
-    document.documentElement.style.setProperty('--wall-dim', String(settings.wallpaper.dim));
 
     if (settings.appearance === 'gradient') {
       if (!settings.gradient.palette) {
@@ -1779,11 +1761,7 @@ audio { display: none; }
     gradientBg.style.animation = settings.gradient.animated ? '' : 'none';
 
     if (settings.appearance === 'wallpaper' && settings.wallpaper.url) {
-      const dim = settings.wallpaper.dim || 0;
-      const dimLayer = dim > 0
-        ? `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim})), `
-        : '';
-      document.body.style.backgroundImage = dimLayer + `url("${settings.wallpaper.url}")`;
+      document.body.style.backgroundImage = `url("${settings.wallpaper.url}")`;
     } else {
       document.body.style.backgroundImage = '';
     }
@@ -1793,9 +1771,9 @@ audio { display: none; }
     normalOpts.style.display = settings.appearance === 'normal' ? '' : 'none';
 
     const descriptions = {
-      normal: 'Clean, minimal, distraction-free. (Edit in JS: descriptions.normal)',
-      gradient: 'An animated color gradient that drifts behind the entire page while playing. (Edit in JS: descriptions.gradient)',
-      wallpaper: 'Use your own image as the full-page background. (Edit in JS: descriptions.wallpaper)',
+      normal: 'Clean, minimal, distraction-free.',
+      gradient: 'An animated color gradient that drifts behind the entire page while playing.',
+      wallpaper: 'Use your own image as the full-page background.',
     };
     appearanceDesc.textContent = descriptions[settings.appearance] || '';
 
@@ -1810,8 +1788,6 @@ audio { display: none; }
 
     gradientBlur.value = settings.gradient.blur;
     gradientBlurVal.textContent = settings.gradient.blur + 'px';
-    wallpaperDim.value = settings.wallpaper.dim;
-    wallpaperDimVal.textContent = Math.round(settings.wallpaper.dim * 100) + '%';
 
     if (!settings.wallpaper.url.startsWith('data:')) {
       wallpaperUrl.value = settings.wallpaper.url || '';
@@ -1836,9 +1812,6 @@ audio { display: none; }
     audio.volume = settings.volume;
     audio.muted = settings.muted;
     volumePopup.value = settings.muted ? 0 : settings.volume;
-
-    renderShortcutReference();
-    renderShortcutEditor();
   }
 
   function updateVisuals(time) {
@@ -1991,7 +1964,7 @@ audio { display: none; }
     saveSettings();
   });
 
-  /* Mini player */
+  /* ───── mini player ───── */
   function placeMini(x, y) {
     const w = miniPlayer.offsetWidth || 240;
     const h = miniPlayer.offsetHeight || 56;
@@ -2060,7 +2033,7 @@ audio { display: none; }
     }
   });
 
-  /* Seeking */
+  /* ───── seeking ───── */
   function pointerToProgress(e) {
     const rect = slider.getBoundingClientRect();
     const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
@@ -2111,6 +2084,7 @@ audio { display: none; }
     updateTimeDisplay();
   });
 
+  /* ───── audio events ───── */
   audio.addEventListener('loadedmetadata', () => {
     duration = isFinite(audio.duration) ? audio.duration : 0;
     total.textContent = formatTime(duration);
@@ -2271,7 +2245,7 @@ audio { display: none; }
     }
   }
 
-  /* Playlist rendering */
+  /* ───── playlist ───── */
   function buildVisiblePlaylist() {
     playlistTabs.innerHTML = '';
     if (TRACKS.length === 0) {
@@ -2339,7 +2313,7 @@ audio { display: none; }
     }
   }
 
-  /* Add songs */
+  /* ───── add songs ───── */
   addSongsBtn.addEventListener('click', () => addSongsInput.click());
 
   addSongsInput.addEventListener('change', async (e) => {
@@ -2450,7 +2424,22 @@ audio { display: none; }
     }
   }
 
-  /* Shortcuts reference + editor */
+  /* ───── shortcuts UI ───── */
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function prettyKeyCombo(combo) {
+    return combo
+      .replace(/ArrowUp/g, '↑')
+      .replace(/ArrowDown/g, '↓')
+      .replace(/ArrowLeft/g, '←')
+      .replace(/ArrowRight/g, '→')
+      .replace(/Space/g, 'Space');
+  }
+
   function renderShortcutReference() {
     const items = [
       { keys: [settings.shortcuts.playPause], label: 'Play / Pause' },
@@ -2466,21 +2455,6 @@ audio { display: none; }
         : it.keys.map(k => `<kbd>${escapeHtml(prettyKeyCombo(k))}</kbd>`).join(it.joined ? '<span class="sep">/</span>' : '<span class="sep">+</span>');
       return `<li><span class="shortcut-keys">${keyHtml}</span><span class="shortcut-label">${it.label}</span></li>`;
     }).join('');
-  }
-
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, c => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[c]));
-  }
-
-  function prettyKeyCombo(combo) {
-    return combo
-      .replace(/ArrowUp/g, '↑')
-      .replace(/ArrowDown/g, '↓')
-      .replace(/ArrowLeft/g, '←')
-      .replace(/ArrowRight/g, '→')
-      .replace(/Space/g, 'Space');
   }
 
   function renderShortcutEditor() {
@@ -2577,6 +2551,7 @@ audio { display: none; }
     renderShortcutReference();
   });
 
+  /* ───── popups ───── */
   function togglePopup(btn, panel, forceOpen) {
     const isOpen = panel.getAttribute('data-open') === 'true';
     const open = forceOpen === undefined ? !isOpen : forceOpen;
@@ -2609,19 +2584,7 @@ audio { display: none; }
     }
   });
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
-    if (listeningAction) return;
-    if (settingsPanel.getAttribute('data-open') === 'true') {
-      togglePopup(settingsBtn, settingsPanel, false);
-      settingsBtn.focus();
-    }
-    if (shortcutsPanel.getAttribute('data-open') === 'true') {
-      togglePopup(shortcutsBtn, shortcutsPanel, false);
-      shortcutsBtn.focus();
-    }
-  });
-
+  /* ───── appearance handlers ───── */
   document.querySelectorAll('[data-appearance-mode]').forEach(btn => {
     btn.addEventListener('click', () => {
       const mode = btn.dataset.appearanceMode;
@@ -2695,19 +2658,8 @@ audio { display: none; }
     saveSettings();
     applySettings();
   });
-  wallpaperDim.addEventListener('input', () => {
-    settings.wallpaper.dim = parseFloat(wallpaperDim.value);
-    wallpaperDimVal.textContent = Math.round(settings.wallpaper.dim * 100) + '%';
-    saveSettings();
-    if (settings.appearance === 'wallpaper' && settings.wallpaper.url) {
-      const dim = settings.wallpaper.dim || 0;
-      const dimLayer = dim > 0
-        ? `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim})), `
-        : '';
-      document.body.style.backgroundImage = dimLayer + `url("${settings.wallpaper.url}")`;
-    }
-  });
 
+  /* ───── playback handlers ───── */
   optShuffle.addEventListener('change', () => {
     settings.playback.shuffle = optShuffle.checked;
     saveSettings();
@@ -2728,6 +2680,7 @@ audio { display: none; }
     saveSettings();
   });
 
+  /* ───── performance handlers ───── */
   optPerfMode.addEventListener('change', () => {
     settings.performance.enabled = optPerfMode.checked;
     saveSettings();
@@ -2754,11 +2707,14 @@ audio { display: none; }
     settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
     saveSettings();
     applySettings();
+    renderShortcutReference();
+    renderShortcutEditor();
     try { sessionStorage.removeItem('cassette:pos'); } catch {}
     savedPosition = null;
     setMinimized(false);
   });
 
+  /* ───── single global keydown listener ───── */
   function matchesCombo(e, combo) {
     if (!combo) return false;
     const parts = combo.split('+');
@@ -2777,8 +2733,24 @@ audio { display: none; }
   }
 
   const SLIDER_KEYS = ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','Home','End'];
+
   document.addEventListener('keydown', (e) => {
     if (listeningAction) return;
+
+    // Escape closes any open panels
+    if (e.key === 'Escape') {
+      if (settingsPanel.getAttribute('data-open') === 'true') {
+        togglePopup(settingsBtn, settingsPanel, false);
+        settingsBtn.focus();
+      }
+      if (shortcutsPanel.getAttribute('data-open') === 'true') {
+        togglePopup(shortcutsBtn, shortcutsPanel, false);
+        shortcutsBtn.focus();
+      }
+      return;
+    }
+
+    // Playback shortcuts — skip if focus is inside an input or the slider
     const tag = (e.target && e.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
     if (document.activeElement === slider && SLIDER_KEYS.includes(e.key)) return;
@@ -2816,10 +2788,13 @@ audio { display: none; }
     }
   });
 
+  /* ───── init ───── */
   async function init() {
     await loadUserTracks();
     buildVisiblePlaylist();
     applySettings();
+    renderShortcutReference();
+    renderShortcutEditor();
     updateMuteUI();
     updateVisuals(0);
     updateTimeDisplay();
