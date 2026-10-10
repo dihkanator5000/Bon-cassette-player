@@ -1779,7 +1779,11 @@ audio { display: none; }
     gradientBg.style.animation = settings.gradient.animated ? '' : 'none';
 
     if (settings.appearance === 'wallpaper' && settings.wallpaper.url) {
-      document.body.style.backgroundImage = `url("${settings.wallpaper.url}")`;
+      const dim = settings.wallpaper.dim || 0;
+      const dimLayer = dim > 0
+        ? `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim})), `
+        : '';
+      document.body.style.backgroundImage = dimLayer + `url("${settings.wallpaper.url}")`;
     } else {
       document.body.style.backgroundImage = '';
     }
@@ -2694,8 +2698,14 @@ audio { display: none; }
   wallpaperDim.addEventListener('input', () => {
     settings.wallpaper.dim = parseFloat(wallpaperDim.value);
     wallpaperDimVal.textContent = Math.round(settings.wallpaper.dim * 100) + '%';
-    document.documentElement.style.setProperty('--wall-dim', String(settings.wallpaper.dim));
     saveSettings();
+    if (settings.appearance === 'wallpaper' && settings.wallpaper.url) {
+      const dim = settings.wallpaper.dim || 0;
+      const dimLayer = dim > 0
+        ? `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim})), `
+        : '';
+      document.body.style.backgroundImage = dimLayer + `url("${settings.wallpaper.url}")`;
+    }
   });
 
   optShuffle.addEventListener('change', () => {
