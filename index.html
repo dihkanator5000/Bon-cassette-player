@@ -71,7 +71,10 @@ body[data-theme="dark"] {
 html, body { min-height: 100%; }
 
 body {
-  background: var(--grayscale-1);
+  background:
+    radial-gradient(ellipse at 50% -14rem, var(--grayscale-3), transparent 42rem),
+    var(--grayscale-1);
+  background-attachment: fixed;
   color: var(--grayscale-12);
   font-family: 'Inter', system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -192,6 +195,7 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
   align-items: center; justify-content: center; gap: 0.375rem;
   border-radius: 16px; border: 1px solid var(--grayscale-3);
   background: var(--grayscale-2); padding: 0.375rem;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.035);
 }
 .player {
   position: relative;
@@ -557,6 +561,7 @@ body.volume-revealed .volume-popup {
   border: 1px solid var(--grayscale-3);
   background: var(--grayscale-2);
   padding: 0.375rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.025);
 }
 .playlist-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -683,14 +688,19 @@ body.volume-revealed .volume-popup {
   border-radius: 5px; border: none;
   background: transparent;
   color: inherit;
-  opacity: 0;
-  pointer-events: none;
+  /* Keep the control usable even when the browser reports no hover device. */
+  opacity: 0.45;
+  pointer-events: auto;
   cursor: pointer;
   display: grid; place-items: center;
   transition: opacity .13s, background-color .13s;
   padding: 0;
 }
 @media (hover: hover) {
+  .playlist-tab:not(:hover):not(:focus-within) .tab-remove {
+    opacity: 0;
+    pointer-events: none;
+  }
   .playlist-tab:hover .tab-remove { opacity: 0.55; pointer-events: auto; }
 }
 .playlist-tab:focus-within .tab-remove { opacity: 0.55; pointer-events: auto; }
@@ -1250,7 +1260,7 @@ audio { display: none; }
   .playlist-title { font-size: 0.72rem; }
   .playlist-count { font-size: 0.72rem; }
   .popup-title { font-size: 0.72rem; }
-  .settings-section-title { font-size: 0.68rem; }
+  .setting-section-title { font-size: 0.68rem; }
   .mini-meta { font-size: 0.62rem; }
   .time-row { font-size: 0.8rem; }
   .progress-thumb { width: 16px; height: 16px; }
@@ -2178,7 +2188,7 @@ audio { display: none; }
 
     if (settings.performance.enabled) return;
 
-    if (settings.performance.reels && settings.performance.animations) {
+    if (settings.performance.reels && settings.performance.animations && !reducedMotion) {
       const r = 'rotate(' + ((time * 300) % 360).toFixed(1) + 'deg)';
       reelSvgs[0].style.transform = r;
       reelSvgs[1].style.transform = r;
@@ -2244,6 +2254,9 @@ audio { display: none; }
       catalogueNumber.textContent = '';
       miniTitle.textContent = 'No track';
       miniMeta.textContent = '—';
+      playerSection.setAttribute('aria-label', 'Cassette audio player');
+      slider.setAttribute('aria-label', 'Seek through audio');
+      document.title = 'Cassette Audio Player | bon';
       return;
     }
     archiveKicker.textContent = t.archive || 'Archive';
@@ -2259,6 +2272,17 @@ audio { display: none; }
 
   const NORMAL_TICK_MS = 1000 / 30;
   const PERF_TICK_MS = 1000;
+  const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let reducedMotion = reducedMotionQuery.matches;
+  const onReducedMotionChange = (event) => {
+    reducedMotion = event.matches;
+    updateVisuals(audio.currentTime);
+  };
+  if (typeof reducedMotionQuery.addEventListener === 'function') {
+    reducedMotionQuery.addEventListener('change', onReducedMotionChange);
+  } else if (typeof reducedMotionQuery.addListener === 'function') {
+    reducedMotionQuery.addListener(onReducedMotionChange);
+  }
 
   let rafId = 0;
   let perfTimerId = 0;
@@ -2424,11 +2448,13 @@ audio { display: none; }
     hideVolume();
   }, true);
 
-  function placeMini(x, y) {
-    const w = miniPlayer.offsetWidth || 240;
-    const h = miniPlayer.offsetHeight || 56;
-    x = Math.max(8, Math.min(window.innerWidth - w - 8, x));
-    y = Math.max(8, Math.min(window.innerHeight - h - 8, y));
+  function placeMini(x, y, measuredWidth, measuredHeight) {
+    const w = measuredWidth || miniPlayer.offsetWidth || 240;
+    const h = measuredHeight || miniPlayer.offsetHeight || 56;
+    const maxX = Math.max(8, window.innerWidth - w - 8);
+    const maxY = Math.max(8, window.innerHeight - h - 8);
+    x = Math.max(8, Math.min(maxX, x));
+    y = Math.max(8, Math.min(maxY, y));
     miniPlayer.style.left = x + 'px';
     miniPlayer.style.top = y + 'px';
     miniPlayer.style.right = 'auto';
@@ -2461,18 +2487,33 @@ audio { display: none; }
       pointerId: e.pointerId,
       startX: e.clientX, startY: e.clientY,
       startLeft: rect.left, startTop: rect.top,
+      width: rect.width, height: rect.height,
+      pendingX: rect.left, pendingY: rect.top, rafId: 0,
     };
     miniPlayer.classList.add('dragging');
     try { miniPlayer.setPointerCapture(e.pointerId); } catch {}
   });
   miniPlayer.addEventListener('pointermove', (e) => {
-    if (!dragState || e.pointerId !== dragState.pointerId) return;
-    const dx = e.clientX - dragState.startX;
-    const dy = e.clientY - dragState.startY;
-    placeMini(dragState.startLeft + dx, dragState.startTop + dy);
+    const state = dragState;
+    if (!state || e.pointerId !== state.pointerId) return;
+    state.pendingX = state.startLeft + e.clientX - state.startX;
+    state.pendingY = state.startTop + e.clientY - state.startY;
+    if (!state.rafId) {
+      state.rafId = requestAnimationFrame(() => {
+        if (dragState !== state) return;
+        state.rafId = 0;
+        placeMini(state.pendingX, state.pendingY, state.width, state.height);
+      });
+    }
   });
   function endDrag(e) {
-    if (!dragState || e.pointerId !== dragState.pointerId) return;
+    const state = dragState;
+    if (!state || e.pointerId !== state.pointerId) return;
+    // Apply the final pointer position before saving it, even if a frame is pending.
+    state.pendingX = state.startLeft + e.clientX - state.startX;
+    state.pendingY = state.startTop + e.clientY - state.startY;
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    placeMini(state.pendingX, state.pendingY, state.width, state.height);
     dragState = null;
     miniPlayer.classList.remove('dragging');
     settings.miniPos = {
@@ -2494,7 +2535,8 @@ audio { display: none; }
 
   function pointerToProgress(e) {
     const rect = slider.getBoundingClientRect();
-    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    if (rect.width <= 0) return 0;
+    const x = e.clientX - rect.left;
     return Math.min(Math.max(x / rect.width, 0), 1);
   }
   function beginSeek(e) {
@@ -2656,7 +2698,13 @@ audio { display: none; }
         else return;
       }
     }
-    switchTrack(next);
+    if (next === currentIndex) {
+      // Repeat-all with a one-item playlist must restart the current source.
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    } else {
+      switchTrack(next, { autoplay: true });
+    }
   }
 
   function replaceCaptionTrack(vttUrl) {
@@ -2675,6 +2723,8 @@ audio { display: none; }
     if (index === currentIndex && opts.force !== true) return;
     if (index < 0 || index >= TRACKS.length) return;
 
+    // Invalidate pending canplay callbacks even when the new track stays paused.
+    const gen = ++_trackGen;
     const wasPlaying = !audio.paused && !audio.ended;
 
     if (restartRafId) { cancelAnimationFrame(restartRafId); restartRafId = 0; }
@@ -2706,7 +2756,6 @@ audio { display: none; }
     audio.load();
 
     if (wasPlaying || opts.autoplay === true) {
-      const gen = ++_trackGen;
       const onCanPlay = () => {
         if (gen !== _trackGen) return;
         audio.play().catch(() => {});
@@ -2755,14 +2804,17 @@ audio { display: none; }
         btn.querySelector('.tab-title').textContent = track.title;
         const metaBits = [track.archive, track.catalogue].filter(Boolean);
         btn.querySelector('.tab-meta').textContent = metaBits.join(' · ');
-        btn.addEventListener('click', (e) => {
-          const removeBtn = e.target.closest('.tab-remove');
-          if (removeBtn) {
+        const removeBtn = btn.querySelector('.tab-remove');
+        if (removeBtn) {
+          removeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             e.stopPropagation();
-            removeUserTrack(i);
-            return;
-          }
-          switchTrack(i);
+            void removeUserTrack(Number(btn.dataset.index));
+          });
+        }
+        btn.addEventListener('click', (e) => {
+          if (e.target.closest('.tab-remove')) return;
+          switchTrack(Number(btn.dataset.index));
         });
         btn.addEventListener('keydown', (e) => {
           if (e.target !== btn) return;
@@ -2847,33 +2899,45 @@ audio { display: none; }
     const t = TRACKS[index];
     if (!t || !t._userAdded) return;
 
-    if (t._idbId != null) {
-      try { await idbDelete(t._idbId); } catch {}
-    }
+    // Start persistence cleanup without making the visible removal wait on IndexedDB.
+    if (t._idbId != null) void idbDelete(t._idbId);
 
-    const wasCurrent = (index === currentIndex);
+    const wasCurrent = index === currentIndex;
     const wasPlaying = !audio.paused && !audio.ended;
-
     TRACKS.splice(index, 1);
 
     if (TRACKS.length === 0) {
+      if (restartRafId) { cancelAnimationFrame(restartRafId); restartRafId = 0; }
+      stopTick();
+      _trackGen++; // Ignore any pending canplay callback for the removed track.
       try { audio.pause(); audio.removeAttribute('src'); audio.load(); } catch {}
       currentIndex = 0;
       duration = 0;
+      _lastPct = -1;
+      _lastElapsedSec = -1;
+      isSwitching = false;
+      cassette.classList.remove('switching');
       updateVisuals(0);
+      setTotalTime();
       updateTimeDisplay();
       setSliderDisabled(true);
       updateLabel();
-      updatePlayUI();
       buildVisiblePlaylist();
+      syncVisiblePlaylist();
+      updatePlayUI();
     } else if (wasCurrent) {
       const target = Math.min(index, TRACKS.length - 1);
       currentIndex = -1;
+      // Rebuild first: switchTrack updates selection through this cached element list.
+      buildVisiblePlaylist();
       switchTrack(target, { force: true, autoplay: wasPlaying });
     } else {
       if (index < currentIndex) currentIndex--;
+      settings.trackIndex = currentIndex;
+      saveSettings();
       buildVisiblePlaylist();
       syncVisiblePlaylist();
+      updatePlayUI();
     }
 
     if (t.src && t.src.startsWith('blob:')) {
@@ -3116,14 +3180,25 @@ audio { display: none; }
   });
   wallpaperUpload.addEventListener('click', () => wallpaperFile.click());
   async function downscale(file, max = 1920) {
+    // Preserve formats that may contain transparency, vector data, or animation.
+    // Only JPEG is safely flattened to a smaller JPEG without losing those features.
+    const isJpeg = file.type === 'image/jpeg' || /\.jpe?g$/i.test(file.name || '');
+    if (!isJpeg) return readAsDataURL(file);
+
     const bmp = await createImageBitmap(file);
-    const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
-    const c = document.createElement('canvas');
-    c.width = Math.round(bmp.width * k);
-    c.height = Math.round(bmp.height * k);
-    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
-    bmp.close();
-    return c.toDataURL('image/jpeg', 0.82);
+    try {
+      const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+      if (k === 1) return await readAsDataURL(file);
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(bmp.width * k));
+      c.height = Math.max(1, Math.round(bmp.height * k));
+      const ctx = c.getContext('2d');
+      if (!ctx) return await readAsDataURL(file);
+      ctx.drawImage(bmp, 0, 0, c.width, c.height);
+      return c.toDataURL('image/jpeg', 0.82);
+    } finally {
+      if (typeof bmp.close === 'function') bmp.close();
+    }
   }
   function readAsDataURL(file) {
     return new Promise((res, rej) => {
@@ -3234,7 +3309,7 @@ audio { display: none; }
   const SLIDER_KEYS = ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','Home','End'];
 
   document.addEventListener('keydown', (e) => {
-    if (listeningAction) return;
+    if (listeningAction || e.repeat) return;
 
     if (e.key === 'Escape') {
       if (settingsPanel.getAttribute('data-open') === 'true') {
