@@ -1,0 +1,2834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cassette Audio Player | bon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Pirata+One&display=swap" rel="stylesheet">
+<style>
+:root {
+  --grayscale-1:  #ffffff;
+  --grayscale-2:  #fafafa;
+  --grayscale-3:  #f4f4f4;
+  --grayscale-4:  #e8e8e8;
+  --grayscale-5:  #d9d9d9;
+  --grayscale-6:  #bdbdbd;
+  --grayscale-7:  #a3a3a3;
+  --grayscale-8:  #8a8a8a;
+  --grayscale-9:  #6e6e6e;
+  --grayscale-10: #555555;
+  --grayscale-11: #333333;
+  --grayscale-12: #171717;
+
+  --green-500: #22c55e;
+  --teal-500:  #14b8a6;
+  --blue-500:  #3b82f6;
+
+  --label-bg: var(--grayscale-1);
+  --label-border: color-mix(in srgb, var(--grayscale-1) 50%, transparent);
+  --label-catalogue: color-mix(in srgb, var(--grayscale-12) 70%, transparent);
+  --label-ink: var(--grayscale-12);
+  --label-kicker: color-mix(in srgb, var(--grayscale-12) 85%, transparent);
+  --label-stripe-one: var(--green-500);
+  --label-stripe-two: var(--teal-500);
+  --label-stripe-three: var(--blue-500);
+  --progress-thumb-border: var(--grayscale-1);
+
+  --grad-1: #22c55e;
+  --grad-2: #3b82f6;
+  --grad-3: #14b8a6;
+  --grad-blur: 70px;
+  --wall-dim: 0;
+}
+
+body[data-theme="dark"] {
+  --grayscale-1:  #0a0a0a;
+  --grayscale-2:  #121212;
+  --grayscale-3:  #1a1a1a;
+  --grayscale-4:  #242424;
+  --grayscale-5:  #333333;
+  --grayscale-6:  #4a4a4a;
+  --grayscale-7:  #666666;
+  --grayscale-8:  #888888;
+  --grayscale-9:  #a8a8a8;
+  --grayscale-10: #c4c4c4;
+  --grayscale-11: #dedede;
+  --grayscale-12: #f5f5f5;
+
+  --label-bg: #f0efed;
+  --label-border: rgba(240,239,237,0.5);
+  --label-ink: #171717;
+  --label-kicker: #171717;
+  --label-catalogue: #171717;
+  --progress-thumb-border: #f0efed;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; }
+
+body {
+  background: var(--grayscale-1);
+  color: var(--grayscale-12);
+  font-family: 'Inter', system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+body.theme-transitioning,
+body.theme-transitioning * {
+  transition: background-color .3s ease, color .3s ease, border-color .3s ease !important;
+}
+
+.gradient-bg {
+  position: fixed;
+  inset: -15%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  background:
+    radial-gradient(50% 55% at 22% 30%, var(--grad-1), transparent 65%),
+    radial-gradient(55% 50% at 80% 70%, var(--grad-2), transparent 65%),
+    radial-gradient(45% 50% at 55% 50%, var(--grad-3), transparent 68%);
+  filter: blur(var(--grad-blur));
+  will-change: opacity, transform;
+  animation: gradientDrift 26s ease-in-out infinite;
+}
+body[data-appearance="gradient"] .gradient-bg { opacity: 1; }
+body[data-appearance="gradient"]:not(.playing) .gradient-bg { opacity: 0.35; }
+body[data-appearance="gradient"].playing .gradient-bg { opacity: 1; }
+body.animations-off .gradient-bg { animation: none; }
+body[data-perf="on"] .gradient-bg { animation: none; }
+@keyframes gradientDrift {
+  0%   { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  25%  { transform: translate3d(4%, -3%, 0) scale(1.08) rotate(3deg); }
+  55%  { transform: translate3d(-3%, 4%, 0) scale(0.96) rotate(-3deg); }
+  80%  { transform: translate3d(3%, 2%, 0) scale(1.05) rotate(2deg); }
+  100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+}
+@media (prefers-reduced-motion: reduce) { .gradient-bg { animation: none; } }
+
+.wallpaper-dim {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: #000;
+  opacity: 0;
+  transition: opacity .3s;
+}
+body[data-appearance="wallpaper"] .wallpaper-dim { opacity: var(--wall-dim); }
+
+main { max-width: 56rem; margin: 0 auto; position: relative; z-index: 1; }
+.content { padding: 2rem 2rem 4rem; }
+header { padding-left: 0.75rem; padding-right: 0.75rem; }
+.logo {
+  font-family: 'Pirata One', Georgia, 'Times New Roman', serif;
+  font-size: 2.25rem; line-height: 1; font-weight: 400; letter-spacing: 0.01em;
+}
+.logo a { color: var(--grayscale-12); text-decoration: none; }
+.kitchen { font-size: 0.875rem; font-weight: 500; color: var(--grayscale-10); }
+.kitchen a { color: inherit; text-decoration: none; transition: color .15s; }
+.kitchen a:hover { color: var(--grayscale-11); }
+.page-title { margin-top: 2rem; font-size: 0.875rem; font-weight: 500; color: var(--grayscale-12); }
+.page-subtitle {
+  margin-top: 1px; max-width: 28rem; color: var(--grayscale-10);
+  font-size: 0.875rem; line-height: 1.25rem;
+}
+
+.player-shell {
+  margin-top: 3rem; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 0.375rem;
+  border-radius: 16px; border: 1px solid var(--grayscale-3);
+  background: var(--grayscale-2); padding: 0.375rem;
+}
+.player {
+  position: relative;
+  display: grid; min-height: 500px; width: 100%;
+  place-items: center; overflow: hidden;
+  border-radius: 13px;
+  background: var(--grayscale-1);
+  padding: 4rem 2rem;
+  color: var(--grayscale-12);
+  container-type: inline-size;
+}
+@media (max-width: 560px) { .player { min-height: 480px; padding: 3rem 0.875rem; } }
+.player-inner { position: relative; z-index: 1; width: 100%; max-width: 530px; }
+
+.player-corner-controls {
+  position: absolute;
+  top: 0.85rem; right: 0.85rem;
+  z-index: 15;
+  display: flex; gap: 0.4rem;
+}
+.corner-btn {
+  width: 2rem; height: 2rem;
+  border-radius: 50%;
+  border: 1px solid var(--grayscale-4);
+  background: var(--grayscale-1);
+  color: var(--grayscale-10);
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: background-color .15s, color .15s, border-color .15s, transform .15s;
+}
+.corner-btn:hover {
+  background: var(--grayscale-2);
+  color: var(--grayscale-12);
+  border-color: var(--grayscale-5);
+}
+.corner-btn:active { transform: scale(0.94); }
+.corner-btn:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
+.corner-btn svg {
+  width: 14px; height: 14px;
+  fill: none; stroke: currentColor;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+
+.cassette {
+  position: relative; width: 100%; aspect-ratio: 1.58;
+  overflow: hidden; border-radius: 18px;
+  border: 1px solid #050505;
+  background: linear-gradient(165deg, #373735 0%, #20201f 52%, #0e0e0d 100%);
+  box-shadow:
+    0 28px 48px rgba(0, 0, 0, 0.24),
+    0 8px 16px rgba(0, 0, 0, 0.18),
+    inset 0 2px 1px rgba(255, 255, 255, 0.2),
+    inset 0 -3px 3px rgba(0, 0, 0, 0.74);
+  --left-tape-scale: 1;
+  --right-tape-scale: 0.6;
+  --reel-rotation: 0deg;
+  transition: opacity .18s ease;
+}
+.cassette.switching { opacity: 0.55; }
+@media (max-width: 560px) { .cassette { border-radius: 0.75rem; } }
+
+.cassette-inner-border {
+  position: absolute; inset: 6px; border-radius: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.62);
+  pointer-events: none;
+}
+.cassette-texture {
+  position: absolute; inset: 0; pointer-events: none;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg width='180' height='180' viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.screw {
+  position: absolute; z-index: 3; width: 3.3%; aspect-ratio: 1;
+  border-radius: 50%; border: 1px solid #060606;
+  background: radial-gradient(circle at 36% 30%, #5f5f5c, #30302e 48%, #171716 78%);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.26), 0 1px 1px rgba(0, 0, 0, 0.38);
+}
+.screw::before, .screw::after {
+  content: ""; position: absolute;
+  top: 50%; left: 18%; right: 18%; height: 14%;
+  transform: translateY(-50%) rotate(45deg);
+  border-radius: 999px; background: #1d1d1b;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.82), 0 1px rgba(255, 255, 255, 0.1);
+}
+.screw::after { transform: translateY(-50%) rotate(-45deg); }
+.screw.tl { top: 4%; left: 2.53%; }
+.screw.tr { top: 4%; right: 2.53%; }
+.screw.bl { bottom: 4%; left: 2.53%; }
+.screw.br { bottom: 4%; right: 2.53%; }
+
+.label {
+  position: absolute; z-index: 1;
+  top: 9.5%; right: 8.5%; bottom: 24%; left: 8.5%;
+  border: 4px solid transparent; border-radius: 9px;
+  background: var(--label-bg); color: var(--label-ink);
+  overflow: clip;
+  box-shadow: inset 0 0 12px rgba(92, 74, 49, 0.12);
+  container-type: inline-size;
+}
+@media (max-width: 560px) { .label { border-radius: 6px; } }
+
+.label-header {
+  position: relative; z-index: 2;
+  margin: 1rem 1rem 0;
+  display: flex; align-items: stretch; justify-content: space-between;
+}
+.label-header-left { display: grid; min-width: 0; align-content: space-between; gap: 0.5rem 0; }
+.label-header-right {
+  margin-left: 0.5rem; display: grid; flex-shrink: 0;
+  align-content: space-between; justify-items: end; gap: 0.5rem 0;
+  font-weight: 700; font-family: 'JetBrains Mono', ui-monospace, monospace;
+  text-transform: uppercase; line-height: 1;
+}
+.archive-kicker {
+  position: relative; z-index: 2;
+  display: flex; align-items: baseline; justify-content: space-between;
+  font-weight: 700; font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(8px, 2.5cqw, 11px);
+  color: var(--label-kicker);
+  text-transform: uppercase; line-height: 1; letter-spacing: 0.12em;
+}
+.track-title-label {
+  position: relative; z-index: 2;
+  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(12px, 4.6cqw, 20px);
+  line-height: 1; letter-spacing: -0.04em;
+}
+.side-label {
+  border-radius: 999px; border: 1px solid var(--label-ink);
+  background: var(--label-ink); padding: 4px 7px;
+  font-size: clamp(8px, 2.5cqw, 11px);
+  color: var(--label-bg); letter-spacing: 0.08em;
+}
+.catalogue {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(7px, 2.2cqw, 10px);
+  color: var(--label-catalogue); letter-spacing: 0.08em;
+}
+.catalogue:empty { display: none; }
+
+.reel-section { position: relative; margin-top: 1rem; height: 34%; }
+@media (max-width: 560px) { .reel-section { height: 31%; } }
+
+.stripes {
+  position: absolute; left: -0.25rem; right: -0.25rem;
+  top: 50%; transform: translateY(-50%);
+  display: grid; height: 58%;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 0.25rem 0;
+}
+.stripes span:nth-child(1) { background: var(--label-stripe-one); }
+.stripes span:nth-child(2) { background: var(--label-stripe-two); }
+.stripes span:nth-child(3) { background: var(--label-stripe-three); }
+
+.reel-window {
+  position: absolute; top: 0; bottom: 0; left: 17.5%; right: 17.5%;
+  z-index: 3; overflow: hidden; border-radius: 999px;
+  background: #1b1a18;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.13), transparent 45%);
+  box-shadow: 0 0 0 4px var(--label-border), inset 0 3px 8px rgba(0, 0, 0, 0.58);
+  --reel-window-color: #1b1a18;
+  container-type: size;
+}
+.reel-window-texture {
+  position: absolute; inset: 0;
+  opacity: 0.25; mix-blend-mode: multiply; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='180' height='180' viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.tape-well {
+  position: absolute; z-index: 2;
+  top: 12%; bottom: 12%; left: 28%; right: 28%;
+  display: flex; align-items: center; justify-content: space-evenly;
+  overflow: hidden; border-radius: 3px;
+  border: 2px solid #11100f;
+  background: #393631;
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent 42%);
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.72), 0 0 0 2px rgba(255, 255, 255, 0.08);
+}
+.tape-bundle {
+  position: absolute; top: 50%;
+  aspect-ratio: 1; height: 360%;
+  transform: translate(-50%, -50%) scale(var(--scale, 1));
+  border-radius: 50%;
+  border: 1px solid #0d0a08;
+  background: repeating-radial-gradient(circle, #050505 0 2px, #171717 2px 4px);
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.7), 0 1px 2px rgba(0, 0, 0, 0.5);
+  will-change: transform;
+}
+.tape-bundle.left { left: calc(50cqh - 28cqw); --scale: var(--left-tape-scale, 1); }
+.tape-bundle.right { left: calc(72cqw - 50cqh); --scale: var(--right-tape-scale, 0.6); }
+.tape-divider {
+  position: relative; z-index: 1;
+  width: 2px; height: 42%;
+  background: rgba(224, 215, 195, 0.28);
+}
+.reel {
+  position: absolute; top: 50%; z-index: 3;
+  aspect-ratio: 1; width: 78cqh;
+  transform: translate(-50%, -50%);
+}
+.reel.left { left: 50cqh; }
+.reel.right { left: calc(100% - 50cqh); }
+.reel svg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border-radius: 50%; transform-origin: center;
+  transform: rotate(var(--reel-rotation));
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) { .reel svg { transform: none !important; } }
+body.animations-off .reel svg { transform: none !important; }
+body[data-perf="on"] .reel svg { transform: none !important; }
+
+.progress-area {
+  position: absolute; z-index: 5;
+  right: 1rem; bottom: 1rem; left: 1rem;
+  display: grid; gap: 0.375rem 0;
+}
+.progress-slider {
+  position: relative; height: 1.5rem; width: 100%;
+  display: flex; align-items: center;
+  cursor: pointer; touch-action: none;
+}
+.progress-slider.disabled { cursor: default; }
+.progress-track {
+  position: relative; height: 3px; width: 100%;
+  transform: translateY(2px); border-radius: 999px;
+  background: color-mix(in srgb, var(--label-ink) 28%, transparent);
+}
+.progress-indicator {
+  height: 100%; width: 0%;
+  border-radius: 999px; background: var(--label-ink);
+  transition: width 0.08s linear;
+}
+.progress-thumb {
+  position: absolute; top: 50%;
+  width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid var(--progress-thumb-border);
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(37, 33, 29, 0.38);
+  transform: translate(-50%, -50%); left: 0%;
+  pointer-events: none; outline: none;
+}
+.progress-slider:focus-visible .progress-thumb {
+  outline: 2px solid var(--grayscale-12); outline-offset: 3px;
+}
+.progress-slider.disabled .progress-thumb { display: none; }
+
+.time-row {
+  position: relative; z-index: 2;
+  display: flex; align-items: baseline; justify-content: space-between;
+  font-weight: 400; font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.75rem; line-height: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+.label-border-overlay {
+  position: absolute; inset: -0.25rem; z-index: 10;
+  border-radius: inherit; border: 4px solid var(--label-border);
+  pointer-events: none;
+}
+
+.control-bar {
+  position: absolute; z-index: 4;
+  right: 27%; bottom: 3.5%; left: 27%; height: 16%;
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  place-items: center; column-gap: clamp(6px, 1.5cqw, 10px);
+  padding: 0 12%;
+  background: color-mix(in srgb, #63635e 20%, transparent);
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.5);
+  clip-path: polygon(13% 0, 87% 0, 100% 100%, 0 100%);
+  container-type: inline-size;
+}
+.ctrl-btn {
+  display: grid; place-items: center; aspect-ratio: 1;
+  border-radius: 50%; border: 1px solid;
+  color: #fdfdfc; cursor: pointer;
+  transition: background-color .15s ease-out, opacity .15s ease-out, transform .15s ease-out;
+}
+.ctrl-btn:active { transform: scale(0.96); }
+.ctrl-btn:focus-visible { outline: 2px solid white; outline-offset: 3px; }
+.ctrl-btn:disabled { cursor: not-allowed; opacity: 0.45; }
+.ctrl-btn:disabled:active { transform: none; }
+.ctrl-btn.small {
+  width: clamp(24px, 6.5cqw, 32px);
+  border-color: #82827c; background: #63635e;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.ctrl-btn.small:hover { background: #7c7b74; }
+.ctrl-btn.large {
+  width: clamp(30px, 8.2cqw, 43px);
+  border-color: rgba(188, 187, 181, 0.5);
+  background: #8d8d86;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.ctrl-btn.large:hover { background: #82827c; }
+.ctrl-btn svg { width: 16px; height: 16px; fill: currentColor; display: block; }
+.ctrl-btn.large svg { width: 18px; height: 18px; }
+
+.volume-wrap { position: relative; display: grid; place-items: center; }
+.volume-popup {
+  position: absolute;
+  bottom: calc(100% + 0.6rem);
+  left: 50%;
+  transform: translate(-50%, 4px);
+  width: 8.5rem;
+  padding: 0.4rem 0.7rem;
+  background: rgba(20, 20, 20, 0.88);
+  -webkit-backdrop-filter: blur(10px) saturate(1.4);
+  backdrop-filter: blur(10px) saturate(1.4);
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.14);
+  display: flex; align-items: center; gap: 0.5rem;
+  opacity: 0; pointer-events: none;
+  transition: opacity .16s ease, transform .18s ease;
+  z-index: 20;
+}
+.volume-wrap:hover .volume-popup,
+.volume-wrap:focus-within .volume-popup {
+  opacity: 1; pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+.volume-popup svg {
+  width: 13px; height: 13px;
+  fill: none; stroke: rgba(255,255,255,0.7);
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  flex-shrink: 0;
+}
+.volume-popup input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  background: transparent;
+  flex: 1; min-width: 0; height: 16px; cursor: pointer;
+}
+.volume-popup input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px; border-radius: 999px; background: rgba(255,255,255,0.22);
+}
+.volume-popup input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 11px; height: 11px; margin-top: -4px;
+  border-radius: 50%; background: #fff;
+  border: 2px solid rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+.volume-popup input[type="range"]::-moz-range-track {
+  height: 3px; border-radius: 999px; background: rgba(255,255,255,0.22);
+}
+.volume-popup input[type="range"]::-moz-range-thumb {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: #fff; border: 2px solid rgba(0,0,0,0.2); cursor: pointer;
+}
+
+/* Playlist / storage */
+.playlist-shell {
+  margin-top: 1rem;
+  border-radius: 16px;
+  border: 1px solid var(--grayscale-3);
+  background: var(--grayscale-2);
+  padding: 0.375rem;
+}
+.playlist-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.5rem 0.75rem 0.25rem;
+  gap: 0.5rem;
+}
+.playlist-title {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--grayscale-10);
+}
+.playlist-count {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.7rem; font-weight: 500;
+  letter-spacing: 0.08em; color: var(--grayscale-8);
+}
+.playlist-header-actions {
+  display: flex; align-items: center; gap: 0.55rem;
+}
+.playlist-add-btn {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 7px;
+  border: 1px solid var(--grayscale-4);
+  background: var(--grayscale-1);
+  color: var(--grayscale-11);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color .13s, color .13s, border-color .13s, transform .13s;
+}
+.playlist-add-btn:hover {
+  background: var(--grayscale-2);
+  color: var(--grayscale-12);
+  border-color: var(--grayscale-5);
+}
+.playlist-add-btn:active { transform: scale(0.97); }
+.playlist-add-btn:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
+.playlist-add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.playlist-add-btn svg {
+  width: 11px; height: 11px;
+  fill: none; stroke: currentColor;
+  stroke-width: 2.75; stroke-linecap: round; stroke-linejoin: round;
+}
+.playlist-tabs {
+  display: flex; flex-direction: column; gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--grayscale-1);
+  border-radius: 12px;
+  max-height: 10rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--grayscale-4) transparent;
+}
+.playlist-tabs::-webkit-scrollbar { width: 6px; }
+.playlist-tabs::-webkit-scrollbar-thumb { background: var(--grayscale-4); border-radius: 999px; }
+.playlist-tabs::-webkit-scrollbar-track { background: transparent; }
+
+.playlist-tab {
+  position: relative;
+  display: flex; align-items: center; gap: 0.55rem;
+  padding: 0.5rem 0.85rem 0.5rem 0.7rem;
+  min-height: 3rem;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--grayscale-10);
+  font-family: inherit; font-size: 0.82rem; font-weight: 500;
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
+  text-align: left; width: 100%; flex-shrink: 0;
+}
+.playlist-tab:hover { background: var(--grayscale-2); color: var(--grayscale-11); }
+.playlist-tab:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
+.playlist-tab.active {
+  background: var(--grayscale-12); color: var(--grayscale-1);
+  border-color: var(--grayscale-12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.playlist-tab.active:hover { background: var(--grayscale-12); }
+.playlist-tab.has-remove { padding-right: 2.2rem; }
+
+.tab-stripe {
+  display: inline-grid; grid-template-rows: repeat(3, 1fr);
+  gap: 1px; width: 10px; height: 14px;
+  border-radius: 2px; overflow: hidden; flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--grayscale-12) 22%, transparent);
+}
+.tab-stripe span { display: block; }
+.tab-stripe span:nth-child(1) { background: var(--label-stripe-one); }
+.tab-stripe span:nth-child(2) { background: var(--label-stripe-two); }
+.tab-stripe span:nth-child(3) { background: var(--label-stripe-three); }
+.playlist-tab.active .tab-stripe { border-color: rgba(255, 255, 255, 0.35); }
+
+.tab-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; line-height: 1.15; }
+.tab-title {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-weight: 600; letter-spacing: -0.005em;
+}
+.tab-meta {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.62rem; letter-spacing: 0.06em;
+  text-transform: uppercase; opacity: 0.62;
+}
+.playlist-tab.active .tab-meta { opacity: 0.75; }
+
+.tab-index {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--grayscale-8);
+  flex-shrink: 0; min-width: 1.2rem;
+}
+.playlist-tab.active .tab-index {
+  color: currentColor;
+  opacity: 0.75;
+}
+
+.tab-remove {
+  position: absolute;
+  top: 50%; right: 0.4rem;
+  transform: translateY(-50%);
+  width: 1.4rem; height: 1.4rem;
+  border-radius: 5px; border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0; cursor: pointer;
+  display: grid; place-items: center;
+  transition: opacity .13s, background-color .13s;
+  padding: 0;
+}
+.playlist-tab:hover .tab-remove { opacity: 0.55; }
+.tab-remove:hover { opacity: 1; background: rgba(0,0,0,0.08); }
+.playlist-tab.active .tab-remove:hover { background: rgba(255,255,255,0.18); }
+body[data-theme="dark"] .tab-remove:hover { background: rgba(255,255,255,0.08); }
+body[data-theme="dark"] .playlist-tab.active .tab-remove:hover { background: rgba(0,0,0,0.15); }
+.tab-remove svg {
+  width: 10px; height: 10px;
+  fill: none; stroke: currentColor;
+  stroke-width: 2.75; stroke-linecap: round;
+}
+
+.tab-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; opacity: 0; transition: opacity .15s;
+  flex-shrink: 0;
+}
+.playlist-tab[data-playing="true"] .tab-dot {
+  opacity: 1; background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.22);
+  animation: tabDotPulse 1.6s ease-in-out infinite;
+}
+body.animations-off .playlist-tab[data-playing="true"] .tab-dot { animation: none; }
+body[data-perf="on"] .playlist-tab[data-playing="true"] .tab-dot { animation: none; }
+@keyframes tabDotPulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.22); }
+  50%      { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.08); }
+}
+.playlist-empty {
+  padding: 1.5rem 1.25rem; text-align: center;
+  color: var(--grayscale-9); font-size: 0.8rem; line-height: 1.45;
+}
+.playlist-empty strong {
+  display: block; color: var(--grayscale-11);
+  font-weight: 600; margin-bottom: 0.35rem; font-size: 0.85rem;
+}
+.playlist-empty code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.72rem; padding: 1px 5px;
+  border-radius: 4px; background: var(--grayscale-2);
+  border: 1px solid var(--grayscale-3);
+  color: var(--grayscale-11);
+}
+
+/* FABs */
+.fab {
+  position: fixed;
+  width: 2.75rem; height: 2.75rem;
+  border-radius: 50%;
+  background: var(--grayscale-1);
+  border: 1px solid var(--grayscale-4);
+  color: var(--grayscale-10);
+  cursor: pointer;
+  z-index: 100;
+  display: grid; place-items: center;
+  box-shadow:
+    0 4px 14px rgba(0,0,0,0.08),
+    0 1px 3px rgba(0,0,0,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+  transition: transform .18s cubic-bezier(0.23,1,0.32,1),
+              background-color .18s ease, color .18s ease,
+              border-color .18s ease, box-shadow .18s ease;
+}
+.fab:hover { background: var(--grayscale-2); color: var(--grayscale-12); transform: translateY(-2px); }
+.fab:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 3px; }
+.fab[aria-expanded="true"] {
+  background: var(--grayscale-12); color: var(--grayscale-1); border-color: var(--grayscale-12);
+}
+.fab svg {
+  width: 16px; height: 16px;
+  fill: none; stroke: currentColor;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.fab-settings { bottom: 1.5rem; right: 1.5rem; }
+.fab-settings svg { transition: transform .35s cubic-bezier(0.23,1,0.32,1); }
+.fab-settings[aria-expanded="true"] svg { transform: rotate(90deg); }
+.fab-shortcuts { top: 1rem; right: 1rem; }
+
+/* Popups */
+.popup {
+  position: fixed;
+  background: var(--grayscale-1);
+  border: 1px solid var(--grayscale-3);
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+  z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease, transform .2s cubic-bezier(0.23,1,0.32,1);
+}
+.popup[data-open="true"] { opacity: 1; pointer-events: auto; }
+
+.shortcuts-panel {
+  top: 4.25rem; right: 1rem;
+  width: min(17rem, calc(100vw - 1.5rem));
+  padding: 0.85rem;
+  transform: translateY(-6px) scale(0.98);
+  transform-origin: top right;
+}
+.shortcuts-panel[data-open="true"] { transform: translateY(0) scale(1); }
+.popup-title {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--grayscale-10);
+  margin-bottom: 0.6rem; padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--grayscale-3);
+}
+.shortcut-list { display: flex; flex-direction: column; gap: 0.4rem; list-style: none; }
+.shortcut-list li {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+}
+.shortcut-keys { display: flex; align-items: center; gap: 0.2rem; flex-shrink: 0; }
+kbd {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.65rem; font-weight: 600;
+  padding: 2px 5px;
+  border-radius: 4px;
+  border: 1px solid var(--grayscale-4);
+  background: var(--grayscale-1);
+  color: var(--grayscale-11);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.04), inset 0 -1px 0 rgba(0,0,0,0.04);
+  min-width: 1.4rem; text-align: center; line-height: 1;
+}
+.shortcut-keys .sep { font-size: 0.6rem; color: var(--grayscale-7); padding: 0 1px; }
+.shortcut-label { color: var(--grayscale-10); font-size: 0.78rem; text-align: right; }
+
+.settings-panel {
+  bottom: 5rem; right: 1.5rem;
+  width: min(24rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 8rem);
+  display: flex; flex-direction: column;
+  transform: translateY(10px) scale(0.97);
+  transform-origin: bottom right;
+}
+.settings-panel[data-open="true"] { transform: translateY(0) scale(1); }
+.settings-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.85rem 1rem 0.7rem;
+  border-bottom: 1px solid var(--grayscale-3);
+}
+.settings-title {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--grayscale-11);
+}
+.settings-close {
+  width: 1.75rem; height: 1.75rem; border-radius: 50%;
+  border: none; background: transparent; color: var(--grayscale-9);
+  cursor: pointer; display: grid; place-items: center;
+  transition: background-color .13s, color .13s;
+}
+.settings-close:hover { background: var(--grayscale-3); color: var(--grayscale-12); }
+.settings-close svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.settings-body {
+  overflow-y: auto; padding: 0.85rem 1rem 1rem;
+  scrollbar-width: thin; scrollbar-color: var(--grayscale-4) transparent;
+}
+.settings-body::-webkit-scrollbar { width: 6px; }
+.settings-body::-webkit-scrollbar-thumb { background: var(--grayscale-4); border-radius: 999px; }
+
+.setting-section { margin-bottom: 1.25rem; }
+.setting-section:last-child { margin-bottom: 0; }
+.setting-section-title {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--grayscale-9);
+  margin-bottom: 0.6rem; padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--grayscale-3);
+}
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.6rem; min-height: 2rem; padding: 0.35rem 0;
+}
+.setting-row-label {
+  color: var(--grayscale-11); font-size: 0.82rem; font-weight: 500;
+  flex: 1; min-width: 0;
+}
+.setting-desc {
+  color: var(--grayscale-9); font-size: 0.75rem; line-height: 1.4;
+  padding: 0 0 0.6rem; font-style: italic;
+}
+.setting-sub { padding-left: 0.6rem; border-left: 2px solid var(--grayscale-3); margin-top: 0.3rem; }
+
+.seg {
+  display: inline-flex; padding: 2px; gap: 2px;
+  background: var(--grayscale-3); border-radius: 8px;
+}
+.seg-btn {
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px; border: none;
+  background: transparent; color: var(--grayscale-10);
+  font-family: inherit; font-size: 0.72rem; font-weight: 600;
+  cursor: pointer; transition: background-color .13s, color .13s;
+  white-space: nowrap;
+}
+.seg-btn:hover { color: var(--grayscale-12); }
+.seg-btn.on {
+  background: var(--grayscale-1); color: var(--grayscale-12);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(0,0,0,0.04);
+}
+.seg-btn:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 1px; }
+
+.switch { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.switch span {
+  position: absolute; inset: 0; border-radius: 999px;
+  background: var(--grayscale-4); transition: background-color .2s; cursor: pointer;
+}
+.switch span::before {
+  content: ''; position: absolute; height: 16px; width: 16px;
+  left: 2px; top: 2px; border-radius: 50%; background: #ffffff;
+  transition: transform .2s; box-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
+.switch input:checked + span { background: var(--grayscale-12); }
+.switch input:checked + span::before { transform: translateX(16px); }
+.switch input:focus-visible + span { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
+
+.range-row { display: flex; align-items: center; gap: 0.6rem; }
+.range-row input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  background: transparent; flex: 1; min-width: 0; height: 20px; cursor: pointer;
+}
+.range-row input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px; border-radius: 999px; background: var(--grayscale-4);
+}
+.range-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 13px; height: 13px; margin-top: -5px;
+  border-radius: 50%; background: var(--grayscale-12);
+  border: 2px solid var(--grayscale-1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25); cursor: pointer;
+}
+.range-row input[type="range"]::-moz-range-track {
+  height: 3px; border-radius: 999px; background: var(--grayscale-4);
+}
+.range-row input[type="range"]::-moz-range-thumb {
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--grayscale-12); border: 2px solid var(--grayscale-1); cursor: pointer;
+}
+.range-value {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.68rem; color: var(--grayscale-9); min-width: 2.5rem; text-align: right;
+}
+
+.act-btn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.42rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--grayscale-4);
+  background: var(--grayscale-1);
+  color: var(--grayscale-11);
+  font-family: inherit; font-size: 0.75rem; font-weight: 500;
+  cursor: pointer;
+  transition: background-color .13s, color .13s, border-color .13s;
+}
+.act-btn:hover { background: var(--grayscale-2); color: var(--grayscale-12); border-color: var(--grayscale-5); }
+.act-btn:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
+.act-btn svg {
+  width: 13px; height: 13px;
+  fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.act-btn.danger { color: #b91c1c; border-color: rgba(185,28,28,0.2); }
+.act-btn.danger:hover { background: #fef2f2; border-color: rgba(185,28,28,0.4); }
+body[data-theme="dark"] .act-btn.danger { color: #f87171; border-color: rgba(248,113,113,0.25); }
+body[data-theme="dark"] .act-btn.danger:hover { background: rgba(248,113,113,0.1); }
+
+.input-row { display: flex; gap: 0.35rem; align-items: center; }
+.input-row input[type="text"] {
+  flex: 1; min-width: 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--grayscale-4);
+  background: var(--grayscale-1);
+  font-family: inherit; font-size: 0.75rem;
+  color: var(--grayscale-12);
+  outline: none; transition: border-color .15s;
+}
+.input-row input[type="text"]:focus { border-color: var(--grayscale-7); }
+.input-row input[type="text"]::placeholder { color: var(--grayscale-7); }
+
+.swatches { display: inline-flex; gap: 0.3rem; }
+.swatch {
+  width: 22px; height: 22px; border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(0,0,0,0.06);
+  background: #888;
+}
+
+.shortcut-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0; }
+.shortcut-row-label {
+  flex: 1; min-width: 0;
+  color: var(--grayscale-11); font-size: 0.82rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.key-badge {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.68rem; font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--grayscale-4);
+  background: var(--grayscale-2);
+  color: var(--grayscale-11);
+  cursor: pointer;
+  min-width: 4.5rem; text-align: center;
+  transition: all .13s;
+}
+.key-badge:hover { background: var(--grayscale-1); border-color: var(--grayscale-6); }
+.key-badge:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
+.key-badge.listening {
+  background: var(--grayscale-12); color: var(--grayscale-1);
+  border-color: var(--grayscale-12);
+  animation: keyListening 1.2s ease-in-out infinite;
+}
+body.animations-off .key-badge.listening { animation: none; }
+body[data-perf="on"] .key-badge.listening { animation: none; }
+@keyframes keyListening {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+.key-badge.custom {
+  border-color: rgba(59,130,246,0.4);
+  background: rgba(59,130,246,0.08);
+  color: #1d4ed8;
+}
+body[data-theme="dark"] .key-badge.custom {
+  border-color: rgba(96,165,250,0.4);
+  background: rgba(96,165,250,0.12);
+  color: #93c5fd;
+}
+.key-reset {
+  width: 1.6rem; height: 1.6rem; border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent; color: var(--grayscale-8);
+  cursor: pointer; display: grid; place-items: center;
+  transition: all .13s; flex-shrink: 0;
+}
+.key-reset:hover { background: var(--grayscale-3); color: var(--grayscale-12); border-color: var(--grayscale-4); }
+.key-reset:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
+.key-reset:disabled { opacity: 0.35; cursor: not-allowed; }
+.key-reset svg {
+  width: 12px; height: 12px;
+  fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+.perf-promo {
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  padding: 0.75rem; border-radius: 10px;
+  background: var(--grayscale-2);
+  border: 1px solid var(--grayscale-3);
+  margin-bottom: 0.6rem;
+}
+body[data-theme="dark"] .perf-promo { background: var(--grayscale-3); border-color: var(--grayscale-4); }
+.perf-promo-body { flex: 1; min-width: 0; }
+.perf-promo-title { font-size: 0.82rem; font-weight: 600; color: var(--grayscale-12); margin-bottom: 0.15rem; }
+.perf-promo-desc { font-size: 0.72rem; line-height: 1.4; color: var(--grayscale-9); }
+
+body[data-perf="on"] .gradient-bg { animation: none !important; }
+body[data-perf="on"] .reel svg { transform: none !important; }
+body[data-perf="on"] .playlist-tab[data-playing="true"] .tab-dot { animation: none !important; }
+body[data-perf="on"] .key-badge.listening { animation: none !important; }
+body[data-perf="on"] .settings-panel,
+body[data-perf="on"] .shortcuts-panel {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: var(--grayscale-1) !important;
+}
+body[data-perf="on"] * { transition-duration: 0.05s !important; }
+body[data-perf="on"] .gradient-bg { transition-duration: 0.4s !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gradient-bg,
+  .playlist-tab[data-playing="true"] .tab-dot,
+  .key-badge.listening { animation: none !important; }
+  .reel svg { transform: none !important; }
+}
+
+/* MINI PLAYER */
+.mini-player {
+  position: fixed;
+  bottom: 1.5rem; left: 1.5rem;
+  display: flex; align-items: center; gap: 0.55rem;
+  padding: 0.4rem 0.5rem 0.4rem 0.4rem;
+  background: var(--grayscale-1);
+  border: 1px solid var(--grayscale-3);
+  border-radius: 999px;
+  box-shadow:
+    0 12px 28px rgba(0,0,0,0.14),
+    0 3px 8px rgba(0,0,0,0.08);
+  z-index: 98;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  max-width: calc(100vw - 3rem);
+}
+.mini-player[hidden] { display: none; }
+.mini-player.dragging { cursor: grabbing; }
+
+.mini-btn {
+  width: 2.4rem; height: 2.4rem;
+  border-radius: 50%; border: none;
+  background: var(--grayscale-12); color: var(--grayscale-1);
+  display: grid; place-items: center;
+  cursor: pointer; flex-shrink: 0;
+  transition: transform .13s, background-color .13s;
+}
+.mini-btn:hover { transform: scale(1.05); }
+.mini-btn:active { transform: scale(0.94); }
+.mini-btn:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
+.mini-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+.mini-btn.mini-expand {
+  background: transparent; color: var(--grayscale-9);
+  width: 1.9rem; height: 1.9rem;
+}
+.mini-btn.mini-expand:hover { background: var(--grayscale-3); color: var(--grayscale-12); }
+.mini-btn.mini-expand svg {
+  fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+.mini-info {
+  display: flex; flex-direction: column; gap: 1px;
+  min-width: 0; padding: 0 0.2rem;
+  pointer-events: none;
+}
+.mini-title {
+  font-size: 0.8rem; font-weight: 600;
+  color: var(--grayscale-12);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 12rem;
+}
+.mini-meta {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.58rem; font-weight: 500;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--grayscale-8);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 12rem;
+}
+
+body.minimized .player-shell,
+body.minimized .playlist-shell { display: none; }
+
+audio { display: none; }
+</style>
+</head>
+<body data-appearance="normal" data-theme="light" data-perf="off">
+
+<div class="gradient-bg" id="gradientBg" aria-hidden="true"></div>
+<div class="wallpaper-dim" id="wallpaperDim" aria-hidden="true"></div>
+
+<main>
+  <div class="content">
+    <header>
+      <p class="logo"><a href="/">bon's</a></p>
+      <p class="kitchen"><a href="/cassette">Cassette</a></p>
+      <h1 class="page-title">Cassette Audio Player</h1>
+      <p class="page-subtitle">A compact audio player built into a cassette.</p>
+    </header>
+
+    <section class="player-shell">
+      <section class="player" aria-label="Audio player" id="playerSection">
+        <audio id="audio" preload="metadata"></audio>
+
+        <div class="player-corner-controls">
+          <button class="corner-btn" id="minimizeBtn" aria-label="Minimize player" title="Minimize">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="player-inner">
+          <div class="cassette" id="cassette">
+            <div class="cassette-inner-border"></div>
+            <div class="cassette-texture"></div>
+            <div class="screw tl"></div><div class="screw tr"></div>
+            <div class="screw bl"></div><div class="screw br"></div>
+
+            <div class="label">
+              <div class="label-header">
+                <div class="label-header-left">
+                  <span class="archive-kicker" id="archiveKicker">Archive —</span>
+                  <span class="track-title-label" id="trackTitleLabel">No tapes loaded</span>
+                </div>
+                <div class="label-header-right">
+                  <span class="side-label" id="sideLabel">Side A</span>
+                  <span class="catalogue" id="catalogueNumber"></span>
+                </div>
+              </div>
+
+              <div class="reel-section">
+                <div class="stripes"><span></span><span></span><span></span></div>
+                <div class="reel-window">
+                  <div class="reel-window-texture"></div>
+                  <div class="tape-well">
+                    <span class="tape-bundle left"></span>
+                    <span class="tape-bundle right"></span>
+                    <span class="tape-divider"></span><span class="tape-divider"></span>
+                    <span class="tape-divider"></span><span class="tape-divider"></span>
+                    <span class="tape-divider"></span>
+                  </div>
+                  <div class="reel left">
+                    <svg viewBox="0 0 100 100" aria-hidden="true">
+                      <circle cx="50" cy="50" r="48" fill="#ffffff"/>
+                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(0 50 50)"/>
+                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(60 50 50)"/>
+                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(120 50 50)"/>
+                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(180 50 50)"/>
+                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(240 50 50)"/>
+                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(300 50 50)"/>
+                      <circle cx="50" cy="50" r="48" fill="none" stroke="#1b1a18" stroke-width="3"/>
+                    </svg>
+                  </div>
+                  <div class="reel right">
+                    <svg viewBox="0 0 100 100" aria-hidden="true">
+                      <circle cx="50" cy="50" r="48" fill="#ffffff"/>
+                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(0 50 50)"/>
+                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(60 50 50)"/>
+                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(120 50 50)"/>
+                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(180 50 50)"/>
+                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(240 50 50)"/>
+                      <path d="M46 3h8v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z" fill="#1b1a18" stroke="#11100f" stroke-width="1.25" stroke-linejoin="round" transform="rotate(300 50 50)"/>
+                      <circle cx="50" cy="50" r="48" fill="none" stroke="#1b1a18" stroke-width="3"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div class="progress-area">
+                <div class="progress-slider" id="slider" role="slider"
+                     aria-label="Seek" aria-valuemin="0" aria-valuemax="100"
+                     aria-valuenow="0" aria-disabled="true" tabindex="0">
+                  <div class="progress-track">
+                    <div class="progress-indicator" id="progressIndicator"></div>
+                  </div>
+                  <div class="progress-thumb" id="progressThumb"></div>
+                </div>
+                <div class="time-row">
+                  <span><span class="sr-only">Elapsed time </span><time id="elapsedTime" datetime="PT0S">0:00</time></span>
+                  <span><span class="sr-only">Total time </span><time id="totalTime" datetime="PT0S">0:00</time></span>
+                </div>
+              </div>
+
+              <div class="label-border-overlay"></div>
+            </div>
+
+            <div class="control-bar">
+              <button class="ctrl-btn small" id="restartBtn" aria-label="Restart track" disabled>
+                <svg viewBox="0 0 256 256" aria-hidden="true">
+                  <path d="M228,128a100,100,0,0,1-98.66,100H128a99.39,99.39,0,0,1-68.62-27.29,12,12,0,0,1,16.48-17.45,76,76,0,1,0-1.57-109c-.13.13-.25.25-.39.37L54.89,92H72a12,12,0,0,1,0,24H24a12,12,0,0,1-12-12V56a12,12,0,0,1,24,0V76.72L57.48,57.06A100,100,0,0,1,228,128Z"/>
+                </svg>
+              </button>
+              <button class="ctrl-btn large" id="playBtn" aria-label="Play">
+                <svg id="playIcon" viewBox="0 0 256 256" aria-hidden="true">
+                  <path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"/>
+                </svg>
+                <svg id="pauseIcon" viewBox="0 0 256 256" aria-hidden="true" style="display:none">
+                  <path d="M200,32H160a16,16,0,0,0-16,16V208a16,16,0,0,0,16,16h40a16,16,0,0,0,16-16V48A16,16,0,0,0,200,32Zm0,176H160V48h40ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Zm0,176H56V48H96Z"/>
+                </svg>
+              </button>
+              <div class="volume-wrap">
+                <button class="ctrl-btn small" id="muteBtn" aria-label="Mute">
+                  <svg id="volumeIcon" viewBox="0 0 256 256" aria-hidden="true">
+                    <path d="M157.27,21.22a12,12,0,0,0-12.64,1.31L75.88,76H32A20,20,0,0,0,12,96v64a20,20,0,0,0,20,20H75.88l68.75,53.47A12,12,0,0,0,164,224V32A12,12,0,0,0,157.27,21.22ZM36,100H68v56H36Zm104,99.46L92,162.13V93.87l48-37.33ZM212,128a44,44,0,0,1-11,29.11,12,12,0,1,1-18-15.88,20,20,0,0,0,0-26.43,12,12,0,0,1,18-15.86A43.94,43.94,0,0,1,212,128Zm40,0a83.87,83.87,0,0,1-21.39,56,12,12,0,0,1-17.89-16,60,60,0,0,0,0-80,12,12,0,1,1,17.88-16A83.87,83.87,0,0,1,252,128Z"/>
+                  </svg>
+                  <svg id="muteIcon" viewBox="0 0 256 256" aria-hidden="true" style="display:none">
+                    <path d="M52.44,36A12,12,0,0,0,32,44L67.12,76H32A20,20,0,0,0,12,96v64a20,20,0,0,0,20,20H75.88l68.75,53.47A12,12,0,0,0,164,224V164l47.56,43.56A12,12,0,0,0,228,188L52.44,36ZM140,188.13L92,162.13V93.87l48-37.33Zm84.56-12.44-17.89-16.38A60,60,0,0,0,212,128a44,44,0,0,0-11-29.11,12,12,0,1,0-18,15.88,20,20,0,0,1,3.55,11.23L161.78,104a43.94,43.94,0,0,0,6.22,9.53,12,12,0,0,1,0,15.86,19.93,19.93,0,0,1-2.22,2.1l17.9,16.38A44,44,0,0,0,224.56,175.69Z"/>
+                  </svg>
+                </button>
+                <div class="volume-popup">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M11 5 6 9H2v6h4l5 4V5z"/>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                  </svg>
+                  <input type="range" id="volumePopup" min="0" max="1" step="0.01" value="1" aria-label="Volume">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="playlist-shell" aria-label="Track list">
+      <div class="playlist-header">
+        <span class="playlist-title">Cassette Rack</span>
+        <div class="playlist-header-actions">
+          <span class="playlist-count" id="playlistCount">0 tapes</span>
+          <button class="playlist-add-btn" id="addSongsBtn" type="button" aria-label="Add songs from your device">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add
+          </button>
+        </div>
+      </div>
+      <div class="playlist-tabs" id="playlistTabs" role="tablist" aria-label="Available tapes"></div>
+      <input type="file" id="addSongsInput" accept="audio/*" multiple hidden>
+    </section>
+  </div>
+</main>
+
+<div class="mini-player" id="miniPlayer" hidden>
+  <button class="mini-btn" id="miniPlayBtn" aria-label="Play">
+    <svg id="miniPlayIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+    <svg id="miniPauseIcon" viewBox="0 0 24 24" aria-hidden="true" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+  </button>
+  <div class="mini-info">
+    <div class="mini-title" id="miniTitle">No track</div>
+    <div class="mini-meta" id="miniMeta">—</div>
+  </div>
+  <button class="mini-btn mini-expand" id="miniExpandBtn" aria-label="Expand player" title="Expand">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M15 3h6v6"/>
+      <path d="M9 21H3v-6"/>
+      <path d="M21 3l-7 7"/>
+      <path d="M3 21l7-7"/>
+    </svg>
+  </button>
+</div>
+
+<button class="fab fab-shortcuts" id="shortcutsBtn" aria-label="Keyboard shortcuts"
+        aria-expanded="false" aria-controls="shortcutsPanel">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2" y="6" width="20" height="12" rx="2"/>
+    <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>
+  </svg>
+</button>
+
+<div class="popup shortcuts-panel" id="shortcutsPanel" data-open="false" role="dialog" aria-label="Keyboard shortcuts">
+  <div class="popup-title">Keyboard Shortcuts</div>
+  <ul class="shortcut-list" id="shortcutListRef"></ul>
+</div>
+
+<button class="fab fab-settings" id="settingsBtn" aria-label="Settings"
+        aria-expanded="false" aria-controls="settingsPanel">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+
+<div class="popup settings-panel" id="settingsPanel" data-open="false" role="dialog" aria-label="Settings">
+  <div class="settings-header">
+    <span class="settings-title">Settings</span>
+    <button class="settings-close" id="settingsClose" aria-label="Close settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="settings-body">
+
+    <section class="setting-section">
+      <h3 class="setting-section-title">Appearance</h3>
+      <div class="setting-row">
+        <span class="setting-row-label">Mode</span>
+        <div class="seg" role="tablist" aria-label="Appearance mode">
+          <button class="seg-btn" type="button" data-appearance-mode="normal">Normal</button>
+          <button class="seg-btn" type="button" data-appearance-mode="gradient">Gradient</button>
+          <button class="seg-btn" type="button" data-appearance-mode="wallpaper">Wallpaper</button>
+        </div>
+      </div>
+      <p class="setting-desc" id="appearanceDesc">Clean, minimal, distraction-free.</p>
+      <div class="setting-row">
+        <span class="setting-row-label">Dark mode</span>
+        <label class="switch"><input type="checkbox" id="darkModeToggle"><span></span></label>
+      </div>
+
+      <div class="setting-sub" id="gradientOpts">
+        <div class="setting-row">
+          <span class="setting-row-label">Animated</span>
+          <label class="switch"><input type="checkbox" id="gradientAnimated"><span></span></label>
+        </div>
+        <div class="setting-row">
+          <span class="setting-row-label">Blur</span>
+          <div class="range-row" style="flex:1; max-width: 12rem;">
+            <input type="range" id="gradientBlur" min="20" max="140" step="5" value="70">
+            <span class="range-value" id="gradientBlurVal">70px</span>
+          </div>
+        </div>
+        <div class="setting-row">
+          <span class="setting-row-label">Palette</span>
+          <div class="swatches">
+            <div class="swatch" id="swatch1"></div>
+            <div class="swatch" id="swatch2"></div>
+            <div class="swatch" id="swatch3"></div>
+          </div>
+        </div>
+        <div class="setting-row">
+          <span class="setting-row-label"></span>
+          <button class="act-btn" id="rerollPalette" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Reroll
+          </button>
+        </div>
+      </div>
+
+      <div class="setting-sub" id="wallpaperOpts">
+        <div class="setting-row" style="padding-bottom: 0.2rem;">
+          <span class="setting-row-label">Image URL</span>
+        </div>
+        <div class="input-row" style="margin-bottom: 0.4rem;">
+          <input type="text" id="wallpaperUrl" placeholder="https://... or leave empty">
+          <button class="act-btn" id="wallpaperApply" type="button">Apply</button>
+        </div>
+        <div class="setting-row">
+          <span class="setting-row-label">Upload</span>
+          <div style="display: flex; gap: 0.35rem;">
+            <button class="act-btn" id="wallpaperUpload" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Choose
+            </button>
+            <button class="act-btn danger" id="wallpaperClear" type="button">Clear</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <span class="setting-row-label">Dim overlay</span>
+          <div class="range-row" style="flex:1; max-width: 12rem;">
+            <input type="range" id="wallpaperDim" min="0" max="0.8" step="0.05" value="0">
+            <span class="range-value" id="wallpaperDimVal">0%</span>
+          </div>
+        </div>
+        <input type="file" id="wallpaperFile" accept="image/*" hidden>
+      </div>
+
+      <div class="setting-sub" id="normalOpts">
+        <div class="setting-row">
+          <span class="setting-row-label" style="font-size:0.75rem; color: var(--grayscale-9); font-style: italic;">
+            No additional options for Normal mode.
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section class="setting-section">
+      <h3 class="setting-section-title">Shortcuts</h3>
+      <div id="shortcutEditor"></div>
+      <div class="setting-row" style="justify-content: flex-end; padding-top: 0.6rem;">
+        <button class="act-btn" id="resetAllShortcuts" type="button">Reset all shortcuts</button>
+      </div>
+    </section>
+
+    <section class="setting-section">
+      <h3 class="setting-section-title">Playback</h3>
+      <div class="setting-row">
+        <span class="setting-row-label">Shuffle</span>
+        <label class="switch"><input type="checkbox" id="optShuffle"><span></span></label>
+      </div>
+      <div class="setting-row">
+        <span class="setting-row-label">Repeat</span>
+        <div class="seg" role="tablist" aria-label="Repeat mode">
+          <button class="seg-btn" type="button" data-repeat="off">Off</button>
+          <button class="seg-btn" type="button" data-repeat="all">All</button>
+          <button class="seg-btn" type="button" data-repeat="one">One</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <span class="setting-row-label">Auto-play next track</span>
+        <label class="switch"><input type="checkbox" id="optAutoplayNext"><span></span></label>
+      </div>
+      <div class="setting-row">
+        <span class="setting-row-label">Remember playback position</span>
+        <label class="switch"><input type="checkbox" id="optRememberPosition"><span></span></label>
+      </div>
+    </section>
+
+    <section class="setting-section">
+      <h3 class="setting-section-title">Performance</h3>
+      <div class="perf-promo">
+        <div class="perf-promo-body">
+          <div class="perf-promo-title">Performance mode</div>
+          <div class="perf-promo-desc">Turns off animations, blur and background effects. Playback stays fully functional.</div>
+        </div>
+        <label class="switch" style="margin-top: 2px;"><input type="checkbox" id="optPerfMode"><span></span></label>
+      </div>
+      <div class="setting-row">
+        <span class="setting-row-label">Animations</span>
+        <label class="switch"><input type="checkbox" id="optAnimations"><span></span></label>
+      </div>
+      <div class="setting-row">
+        <span class="setting-row-label">Reel spin</span>
+        <label class="switch"><input type="checkbox" id="optReels"><span></span></label>
+      </div>
+      <div class="setting-row">
+        <span class="setting-row-label">Blur effects</span>
+        <label class="switch"><input type="checkbox" id="optBlur"><span></span></label>
+      </div>
+    </section>
+
+    <section class="setting-section">
+      <h3 class="setting-section-title">Advanced</h3>
+      <div class="setting-row">
+        <span class="setting-row-label" style="font-size:0.75rem; color: var(--grayscale-9);">
+          Reset every setting to defaults.
+        </span>
+        <button class="act-btn danger" id="resetAllSettings" type="button">Reset all</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const TRACKS = [
+    {
+      title: 'Snacking Peaches',
+      archive: 'Archive 11',
+      catalogue: '200769',
+      side: 'Side A',
+      src: 'https://files.catbox.moe/obc42q.mp3',
+      vtt: '',
+    },
+  ];
+
+  const DEFAULT_SHORTCUTS = {
+    playPause: 'Space',
+    mute: 'M',
+    restart: 'R',
+    next: 'Ctrl+ArrowRight',
+    prev: 'Ctrl+ArrowLeft',
+    jump1: '1', jump2: '2', jump3: '3',
+    jump4: '4', jump5: '5', jump6: '6',
+    jump7: '7', jump8: '8', jump9: '9',
+  };
+
+  const DEFAULT_SETTINGS = {
+    appearance: 'normal',
+    theme: 'light',
+    gradient: { animated: true, blur: 70, palette: null },
+    wallpaper: { url: '', dim: 0 },
+    shortcuts: { ...DEFAULT_SHORTCUTS },
+    playback: { shuffle: false, repeat: 'off', autoplayNext: true, rememberPosition: false },
+    performance: { enabled: false, animations: true, reels: true, blur: true },
+    volume: 0.78,
+    muted: false,
+    trackIndex: 0,
+    minimized: false,
+    miniPos: null,
+  };
+
+  function deepMerge(base, override) {
+    if (!override || typeof override !== 'object') return base;
+    const out = Array.isArray(base) ? [...base] : { ...base };
+    for (const k in override) {
+      if (override[k] && typeof override[k] === 'object' && !Array.isArray(override[k])) {
+        out[k] = deepMerge(base[k] || {}, override[k]);
+      } else {
+        out[k] = override[k];
+      }
+    }
+    return out;
+  }
+
+  let settings;
+  try {
+    const raw = localStorage.getItem('cassette:settings');
+    settings = raw ? deepMerge(DEFAULT_SETTINGS, JSON.parse(raw)) : { ...DEFAULT_SETTINGS };
+  } catch {
+    settings = { ...DEFAULT_SETTINGS };
+  }
+
+  function saveSettings() {
+    try { localStorage.setItem('cassette:settings', JSON.stringify(settings)); } catch {}
+  }
+
+  /* IndexedDB helpers */
+  const IDB_NAME = 'cassette-db';
+  const IDB_STORE = 'user-songs';
+  let _dbPromise = null;
+
+  function openDB() {
+    if (_dbPromise) return _dbPromise;
+    if (typeof indexedDB === 'undefined') {
+      _dbPromise = Promise.reject(new Error('IndexedDB not available'));
+      return _dbPromise;
+    }
+    _dbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) {
+          db.createObjectStore(IDB_STORE, { keyPath: 'id', autoIncrement: true });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    return _dbPromise;
+  }
+
+  async function idbGetAll() {
+    try {
+      const db = await openDB();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readonly');
+        const req = tx.objectStore(IDB_STORE).getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (e) {
+      console.warn('[cassette] IDB read failed:', e);
+      return [];
+    }
+  }
+
+  async function idbAdd(entry) {
+    try {
+      const db = await openDB();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        const req = tx.objectStore(IDB_STORE).add(entry);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (e) {
+      console.warn('[cassette] IDB write failed:', e);
+      return null;
+    }
+  }
+
+  async function idbDelete(id) {
+    try {
+      const db = await openDB();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        const req = tx.objectStore(IDB_STORE).delete(id);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    } catch (e) {
+      console.warn('[cassette] IDB delete failed:', e);
+    }
+  }
+
+  function randomCatalogueId() {
+    return String(Math.floor(Math.random() * 900000) + 100000);
+  }
+
+  const $ = (id) => document.getElementById(id);
+  const audio = $('audio');
+  const cassette = $('cassette');
+  const playerSection = $('playerSection');
+  const playBtn = $('playBtn');
+  const playIcon = $('playIcon');
+  const pauseIcon = $('pauseIcon');
+  const restartBtn = $('restartBtn');
+  const muteBtn = $('muteBtn');
+  const volumeIcon = $('volumeIcon');
+  const muteIcon = $('muteIcon');
+  const slider = $('slider');
+  const indicator = $('progressIndicator');
+  const thumb = $('progressThumb');
+  const elapsed = $('elapsedTime');
+  const total = $('totalTime');
+
+  const archiveKicker = $('archiveKicker');
+  const trackTitleLabel = $('trackTitleLabel');
+  const sideLabel = $('sideLabel');
+  const catalogueNumber = $('catalogueNumber');
+
+  const playlistTabs = $('playlistTabs');
+  const playlistCount = $('playlistCount');
+  const addSongsBtn = $('addSongsBtn');
+  const addSongsInput = $('addSongsInput');
+
+  const shortcutsBtn = $('shortcutsBtn');
+  const shortcutsPanel = $('shortcutsPanel');
+  const shortcutListRef = $('shortcutListRef');
+
+  const settingsBtn = $('settingsBtn');
+  const settingsPanel = $('settingsPanel');
+  const settingsClose = $('settingsClose');
+
+  const appearanceDesc = $('appearanceDesc');
+  const gradientOpts = $('gradientOpts');
+  const wallpaperOpts = $('wallpaperOpts');
+  const normalOpts = $('normalOpts');
+  const darkModeToggle = $('darkModeToggle');
+  const gradientAnimated = $('gradientAnimated');
+  const gradientBlur = $('gradientBlur');
+  const gradientBlurVal = $('gradientBlurVal');
+  const swatch1 = $('swatch1');
+  const swatch2 = $('swatch2');
+  const swatch3 = $('swatch3');
+  const rerollPalette = $('rerollPalette');
+  const wallpaperUrl = $('wallpaperUrl');
+  const wallpaperApply = $('wallpaperApply');
+  const wallpaperUpload = $('wallpaperUpload');
+  const wallpaperClear = $('wallpaperClear');
+  const wallpaperDim = $('wallpaperDim');
+  const wallpaperDimVal = $('wallpaperDimVal');
+  const wallpaperFile = $('wallpaperFile');
+  const shortcutEditor = $('shortcutEditor');
+  const resetAllShortcuts = $('resetAllShortcuts');
+  const optShuffle = $('optShuffle');
+  const optAutoplayNext = $('optAutoplayNext');
+  const optRememberPosition = $('optRememberPosition');
+  const optPerfMode = $('optPerfMode');
+  const optAnimations = $('optAnimations');
+  const optReels = $('optReels');
+  const optBlur = $('optBlur');
+  const resetAllSettings = $('resetAllSettings');
+  const volumePopup = $('volumePopup');
+  const gradientBg = $('gradientBg');
+
+  const minimizeBtn = $('minimizeBtn');
+  const miniPlayer = $('miniPlayer');
+  const miniPlayBtn = $('miniPlayBtn');
+  const miniPlayIcon = $('miniPlayIcon');
+  const miniPauseIcon = $('miniPauseIcon');
+  const miniTitle = $('miniTitle');
+  const miniMeta = $('miniMeta');
+  const miniExpandBtn = $('miniExpandBtn');
+
+  const SHORTCUT_ACTIONS = [
+    { id: 'playPause', label: 'Play / Pause' },
+    { id: 'mute', label: 'Mute / Unmute' },
+    { id: 'restart', label: 'Restart track' },
+    { id: 'next', label: 'Next track' },
+    { id: 'prev', label: 'Previous track' },
+    { id: 'jump1', label: 'Jump to track 1' },
+    { id: 'jump2', label: 'Jump to track 2' },
+    { id: 'jump3', label: 'Jump to track 3' },
+    { id: 'jump4', label: 'Jump to track 4' },
+    { id: 'jump5', label: 'Jump to track 5' },
+    { id: 'jump6', label: 'Jump to track 6' },
+    { id: 'jump7', label: 'Jump to track 7' },
+    { id: 'jump8', label: 'Jump to track 8' },
+    { id: 'jump9', label: 'Jump to track 9' },
+  ];
+
+  let currentIndex = 0;
+  let duration = 0;
+  let isSeeking = false;
+  let wasPlayingBeforeSeek = false;
+  let rafId = null;
+  let restartRafId = null;
+  let isSwitching = false;
+  let listeningAction = null;
+  let shortcutKeydownHandler = null;
+  let savedPosition = null;
+
+  function formatTime(s) {
+    if (!isFinite(s) || s < 0) return '0:00';
+    const m = Math.floor(s / 60);
+    const r = Math.floor(s % 60);
+    return m + ':' + (r < 10 ? '0' : '') + r;
+  }
+  function formatDuration(s) {
+    if (!isFinite(s) || s < 0) return 'PT0S';
+    return 'PT' + Math.floor(s) + 'S';
+  }
+  function easeInOutCubic(p) {
+    return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+  }
+  function currentTrack() { return TRACKS[currentIndex]; }
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function generatePalette() {
+    const baseHue = Math.floor(Math.random() * 360);
+    const mode = Math.floor(Math.random() * 3);
+    let hues;
+    if (mode === 0) hues = [baseHue, (baseHue + 28) % 360, (baseHue + 332) % 360];
+    else if (mode === 1) hues = [baseHue, (baseHue + 120) % 360, (baseHue + 240) % 360];
+    else hues = [baseHue, (baseHue + 180) % 360, (baseHue + 32) % 360];
+    const satBase = 68 + Math.floor(Math.random() * 12);
+    const litBase = 52 + Math.floor(Math.random() * 8);
+    return hues.map((h, i) => {
+      const s = Math.min(90, Math.max(55, satBase + (i - 1) * 4));
+      const l = Math.min(68, Math.max(46, litBase + (i - 1) * 3));
+      return `hsl(${h}, ${s}%, ${l}%)`;
+    });
+  }
+
+  function applyPalette(palette) {
+    const root = document.documentElement;
+    if (palette && palette.length === 3) {
+      root.style.setProperty('--grad-1', palette[0]);
+      root.style.setProperty('--grad-2', palette[1]);
+      root.style.setProperty('--grad-3', palette[2]);
+      root.style.setProperty('--label-stripe-one', palette[0]);
+      root.style.setProperty('--label-stripe-two', palette[1]);
+      root.style.setProperty('--label-stripe-three', palette[2]);
+      swatch1.style.background = palette[0];
+      swatch2.style.background = palette[1];
+      swatch3.style.background = palette[2];
+    } else {
+      root.style.removeProperty('--grad-1');
+      root.style.removeProperty('--grad-2');
+      root.style.removeProperty('--grad-3');
+      root.style.removeProperty('--label-stripe-one');
+      root.style.removeProperty('--label-stripe-two');
+      root.style.removeProperty('--label-stripe-three');
+      swatch1.style.background = '#888';
+      swatch2.style.background = '#888';
+      swatch3.style.background = '#888';
+    }
+  }
+
+  function applySettings() {
+    document.body.dataset.appearance = settings.appearance;
+    document.body.dataset.theme = settings.theme;
+    document.body.dataset.perf = settings.performance.enabled ? 'on' : 'off';
+    document.body.classList.toggle('animations-off', !settings.performance.animations);
+
+    document.documentElement.style.setProperty('--grad-blur', settings.gradient.blur + 'px');
+    document.documentElement.style.setProperty('--wall-dim', String(settings.wallpaper.dim));
+
+    if (settings.appearance === 'gradient') {
+      if (!settings.gradient.palette) {
+        settings.gradient.palette = generatePalette();
+        saveSettings();
+      }
+      applyPalette(settings.gradient.palette);
+      gradientAnimated.checked = settings.gradient.animated;
+    } else {
+      applyPalette(null);
+    }
+
+    gradientBg.style.animationPlayState = settings.gradient.animated ? 'running' : 'paused';
+    gradientBg.style.animation = settings.gradient.animated ? '' : 'none';
+
+    if (settings.appearance === 'wallpaper' && settings.wallpaper.url) {
+      document.body.style.backgroundImage = `url("${settings.wallpaper.url}")`;
+    } else {
+      document.body.style.backgroundImage = '';
+    }
+
+    gradientOpts.style.display = settings.appearance === 'gradient' ? '' : 'none';
+    wallpaperOpts.style.display = settings.appearance === 'wallpaper' ? '' : 'none';
+    normalOpts.style.display = settings.appearance === 'normal' ? '' : 'none';
+
+    const descriptions = {
+      normal: 'Clean, minimal, distraction-free. (Edit in JS: descriptions.normal)',
+      gradient: 'An animated color gradient that drifts behind the entire page while playing. (Edit in JS: descriptions.gradient)',
+      wallpaper: 'Use your own image as the full-page background. (Edit in JS: descriptions.wallpaper)',
+    };
+    appearanceDesc.textContent = descriptions[settings.appearance] || '';
+
+    darkModeToggle.checked = settings.theme === 'dark';
+
+    document.querySelectorAll('[data-appearance-mode]').forEach(btn => {
+      btn.classList.toggle('on', btn.dataset.appearanceMode === settings.appearance);
+    });
+    document.querySelectorAll('[data-repeat]').forEach(btn => {
+      btn.classList.toggle('on', btn.dataset.repeat === settings.playback.repeat);
+    });
+
+    gradientBlur.value = settings.gradient.blur;
+    gradientBlurVal.textContent = settings.gradient.blur + 'px';
+    wallpaperDim.value = settings.wallpaper.dim;
+    wallpaperDimVal.textContent = Math.round(settings.wallpaper.dim * 100) + '%';
+
+    if (!settings.wallpaper.url.startsWith('data:')) {
+      wallpaperUrl.value = settings.wallpaper.url || '';
+    } else {
+      wallpaperUrl.value = '';
+    }
+
+    optShuffle.checked = settings.playback.shuffle;
+    optAutoplayNext.checked = settings.playback.autoplayNext;
+    optRememberPosition.checked = settings.playback.rememberPosition;
+
+    optPerfMode.checked = settings.performance.enabled;
+    optAnimations.checked = settings.performance.animations;
+    optReels.checked = settings.performance.reels;
+    optBlur.checked = settings.performance.blur;
+
+    document.querySelectorAll('.settings-panel, .shortcuts-panel').forEach(el => {
+      el.style.backdropFilter = settings.performance.blur ? '' : 'none';
+      el.style.webkitBackdropFilter = settings.performance.blur ? '' : 'none';
+    });
+
+    audio.volume = settings.volume;
+    audio.muted = settings.muted;
+    volumePopup.value = settings.muted ? 0 : settings.volume;
+
+    renderShortcutReference();
+    renderShortcutEditor();
+  }
+
+  function updateVisuals(time) {
+    const progress = duration > 0 ? Math.min(Math.max(time / duration, 0), 1) : 0;
+    if (settings.performance.reels && settings.performance.animations) {
+      cassette.style.setProperty('--reel-rotation', ((time * 300) % 360) + 'deg');
+    }
+    cassette.style.setProperty('--left-tape-scale', String(1 - progress * 0.4));
+    cassette.style.setProperty('--right-tape-scale', String(0.6 + progress * 0.4));
+    indicator.style.width = (progress * 100) + '%';
+    thumb.style.left = (progress * 100) + '%';
+    slider.setAttribute('aria-valuenow', Math.round(progress * 100));
+    slider.setAttribute('aria-valuetext', formatTime(time) + ' of ' + formatTime(duration));
+  }
+
+  function updateTimeDisplay() {
+    const t = audio.currentTime;
+    elapsed.textContent = formatTime(t);
+    elapsed.setAttribute('datetime', formatDuration(t));
+    total.textContent = formatTime(duration);
+    total.setAttribute('datetime', formatDuration(duration));
+  }
+
+  function setSliderDisabled(disabled) {
+    slider.classList.toggle('disabled', disabled);
+    slider.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+    restartBtn.disabled = disabled || audio.currentTime <= 0;
+  }
+
+  function updatePlayUI() {
+    const playing = !audio.paused && !audio.ended;
+    playIcon.style.display = playing ? 'none' : 'block';
+    pauseIcon.style.display = playing ? 'block' : 'none';
+    playBtn.setAttribute('aria-label', (playing ? 'Pause' : 'Play') + ' ' + (currentTrack() ? currentTrack().title : ''));
+    document.body.classList.toggle('playing', playing);
+    document.querySelectorAll('.playlist-tab').forEach((el, i) => {
+      el.dataset.playing = (i === currentIndex && playing) ? 'true' : 'false';
+    });
+    miniPlayIcon.style.display = playing ? 'none' : 'block';
+    miniPauseIcon.style.display = playing ? 'block' : 'none';
+  }
+
+  function updateMuteUI() {
+    if (audio.muted || audio.volume === 0) {
+      volumeIcon.style.display = 'none';
+      muteIcon.style.display = 'block';
+      muteBtn.setAttribute('aria-label', 'Unmute');
+    } else {
+      volumeIcon.style.display = 'block';
+      muteIcon.style.display = 'none';
+      muteBtn.setAttribute('aria-label', 'Mute');
+    }
+  }
+
+  function updateLabel() {
+    const t = currentTrack();
+    if (!t) {
+      archiveKicker.textContent = 'Archive —';
+      trackTitleLabel.textContent = 'No tapes loaded';
+      sideLabel.textContent = 'Side A';
+      catalogueNumber.textContent = '';
+      miniTitle.textContent = 'No track';
+      miniMeta.textContent = '—';
+      return;
+    }
+    archiveKicker.textContent = t.archive || 'Archive';
+    trackTitleLabel.textContent = t.title || 'Untitled';
+    sideLabel.textContent = t.side || 'Side A';
+    catalogueNumber.textContent = t.catalogue ? String(t.catalogue) : '';
+    playerSection.setAttribute('aria-label', t.title + ' audio player');
+    slider.setAttribute('aria-label', 'Seek through ' + t.title);
+    document.title = 'Cassette Audio Player | ' + t.title;
+    miniTitle.textContent = t.title || 'Untitled';
+    miniMeta.textContent = [t.archive, t.catalogue].filter(Boolean).join(' · ') || '—';
+  }
+
+  function tick() {
+    if (!isSeeking && !isSwitching) {
+      updateVisuals(audio.currentTime);
+      updateTimeDisplay();
+      restartBtn.disabled = duration <= 0 || audio.currentTime <= 0;
+    }
+    if (!audio.paused && !audio.ended) {
+      rafId = requestAnimationFrame(tick);
+    }
+  }
+
+  function togglePlay() {
+    if (!currentTrack()) return;
+    if (audio.paused || audio.ended) {
+      if (audio.ended) audio.currentTime = 0;
+      audio.play().catch(e => console.warn('Playback error:', e));
+    } else {
+      audio.pause();
+    }
+  }
+  playBtn.addEventListener('click', togglePlay);
+  miniPlayBtn.addEventListener('click', togglePlay);
+
+  function doRestart() {
+    if (duration <= 0) return;
+    if (restartRafId) { cancelAnimationFrame(restartRafId); restartRafId = null; }
+    const wasPlaying = !audio.paused;
+    const from = audio.currentTime;
+    if (wasPlaying) audio.pause();
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+                   !settings.performance.animations;
+    if (from <= 0 || reduce) {
+      audio.currentTime = 0;
+      updateVisuals(0); updateTimeDisplay();
+      if (wasPlaying) audio.play().catch(() => {});
+      return;
+    }
+    const distance = Math.min(Math.max(from / duration, 0), 1);
+    const durMs = 220 + 780 * distance;
+    const start = performance.now();
+    function step(now) {
+      const p = Math.min((now - start) / durMs, 1);
+      const t = from * (1 - easeInOutCubic(p));
+      updateVisuals(t);
+      elapsed.textContent = formatTime(t);
+      if (p < 1) {
+        restartRafId = requestAnimationFrame(step);
+      } else {
+        restartRafId = null;
+        audio.currentTime = 0;
+        updateVisuals(0); updateTimeDisplay();
+        if (wasPlaying) audio.play().catch(() => {});
+      }
+    }
+    restartRafId = requestAnimationFrame(step);
+  }
+  restartBtn.addEventListener('click', doRestart);
+
+  function doMute() {
+    audio.muted = !audio.muted;
+    settings.muted = audio.muted;
+    saveSettings();
+    updateMuteUI();
+  }
+  muteBtn.addEventListener('click', doMute);
+
+  volumePopup.addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    audio.muted = v === 0;
+    audio.volume = v;
+    settings.volume = v;
+    settings.muted = audio.muted;
+    saveSettings();
+  });
+
+  /* Mini player */
+  function placeMini(x, y) {
+    const w = miniPlayer.offsetWidth || 240;
+    const h = miniPlayer.offsetHeight || 56;
+    x = Math.max(8, Math.min(window.innerWidth - w - 8, x));
+    y = Math.max(8, Math.min(window.innerHeight - h - 8, y));
+    miniPlayer.style.left = x + 'px';
+    miniPlayer.style.top = y + 'px';
+    miniPlayer.style.right = 'auto';
+    miniPlayer.style.bottom = 'auto';
+  }
+
+  function setMinimized(min) {
+    settings.minimized = !!min;
+    saveSettings();
+    if (min) {
+      document.body.classList.add('minimized');
+      miniPlayer.hidden = false;
+      if (settings.miniPos && typeof settings.miniPos.x === 'number') {
+        placeMini(settings.miniPos.x, settings.miniPos.y);
+      }
+    } else {
+      document.body.classList.remove('minimized');
+      miniPlayer.hidden = true;
+    }
+  }
+
+  minimizeBtn.addEventListener('click', () => setMinimized(true));
+  miniExpandBtn.addEventListener('click', () => setMinimized(false));
+
+  let dragState = null;
+  miniPlayer.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button')) return;
+    const rect = miniPlayer.getBoundingClientRect();
+    dragState = {
+      pointerId: e.pointerId,
+      startX: e.clientX, startY: e.clientY,
+      startLeft: rect.left, startTop: rect.top,
+    };
+    miniPlayer.classList.add('dragging');
+    try { miniPlayer.setPointerCapture(e.pointerId); } catch {}
+  });
+  miniPlayer.addEventListener('pointermove', (e) => {
+    if (!dragState || e.pointerId !== dragState.pointerId) return;
+    const dx = e.clientX - dragState.startX;
+    const dy = e.clientY - dragState.startY;
+    placeMini(dragState.startLeft + dx, dragState.startTop + dy);
+  });
+  function endDrag(e) {
+    if (!dragState || e.pointerId !== dragState.pointerId) return;
+    dragState = null;
+    miniPlayer.classList.remove('dragging');
+    settings.miniPos = {
+      x: parseFloat(miniPlayer.style.left) || 0,
+      y: parseFloat(miniPlayer.style.top) || 0,
+    };
+    saveSettings();
+  }
+  miniPlayer.addEventListener('pointerup', endDrag);
+  miniPlayer.addEventListener('pointercancel', endDrag);
+
+  window.addEventListener('resize', () => {
+    if (!miniPlayer.hidden) {
+      const x = parseFloat(miniPlayer.style.left) || 0;
+      const y = parseFloat(miniPlayer.style.top) || 0;
+      placeMini(x, y);
+    }
+  });
+
+  /* Seeking */
+  function pointerToProgress(e) {
+    const rect = slider.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    return Math.min(Math.max(x / rect.width, 0), 1);
+  }
+  function beginSeek(e) {
+    if (duration <= 0) return;
+    isSeeking = true;
+    wasPlayingBeforeSeek = !audio.paused;
+    if (wasPlayingBeforeSeek) audio.pause();
+    moveSeek(e);
+  }
+  function moveSeek(e) {
+    if (!isSeeking) return;
+    const p = pointerToProgress(e);
+    const t = p * duration;
+    updateVisuals(t);
+    elapsed.textContent = formatTime(t);
+    if (e.cancelable) e.preventDefault();
+  }
+  function endSeek(e) {
+    if (!isSeeking) return;
+    const p = pointerToProgress(e);
+    audio.currentTime = p * duration;
+    updateVisuals(audio.currentTime);
+    updateTimeDisplay();
+    isSeeking = false;
+    if (wasPlayingBeforeSeek) audio.play().catch(() => {});
+  }
+  slider.addEventListener('pointerdown', (e) => {
+    slider.setPointerCapture(e.pointerId);
+    beginSeek(e);
+  });
+  slider.addEventListener('pointermove', moveSeek);
+  slider.addEventListener('pointerup', endSeek);
+  slider.addEventListener('pointercancel', endSeek);
+  slider.addEventListener('keydown', (e) => {
+    if (duration <= 0) return;
+    let delta = 0;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') delta = 5;
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') delta = -5;
+    else if (e.key === 'Home') { e.preventDefault(); audio.currentTime = 0; updateVisuals(0); updateTimeDisplay(); return; }
+    else if (e.key === 'End') { e.preventDefault(); audio.currentTime = duration; updateVisuals(duration); updateTimeDisplay(); return; }
+    else return;
+    e.preventDefault();
+    audio.currentTime = Math.min(Math.max(audio.currentTime + delta, 0), duration);
+    updateVisuals(audio.currentTime);
+    updateTimeDisplay();
+  });
+
+  audio.addEventListener('loadedmetadata', () => {
+    duration = isFinite(audio.duration) ? audio.duration : 0;
+    total.textContent = formatTime(duration);
+    total.setAttribute('datetime', formatDuration(duration));
+    setSliderDisabled(duration <= 0);
+    updateVisuals(audio.currentTime);
+    updateTimeDisplay();
+    cassette.classList.remove('switching');
+    isSwitching = false;
+    updateMediaSession();
+    if (settings.playback.rememberPosition && savedPosition && savedPosition.trackIndex === currentIndex) {
+      const restoreTo = Math.min(savedPosition.currentTime, duration);
+      audio.currentTime = restoreTo;
+      updateVisuals(restoreTo);
+      updateTimeDisplay();
+      savedPosition = null;
+    }
+  });
+  audio.addEventListener('play', () => {
+    updatePlayUI();
+    cancelAnimationFrame(rafId);
+    tick();
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+  });
+  audio.addEventListener('pause', () => {
+    updatePlayUI();
+    cancelAnimationFrame(rafId);
+    restartBtn.disabled = audio.currentTime <= 0;
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+    if (settings.playback.rememberPosition) {
+      savedPosition = { trackIndex: currentIndex, currentTime: audio.currentTime };
+    }
+  });
+  audio.addEventListener('ended', () => {
+    updatePlayUI();
+    cancelAnimationFrame(rafId);
+    updateVisuals(audio.currentTime);
+    updateTimeDisplay();
+    handleTrackEnded();
+  });
+  audio.addEventListener('volumechange', () => {
+    updateMuteUI();
+    settings.volume = audio.volume;
+    settings.muted = audio.muted;
+    volumePopup.value = audio.muted ? 0 : audio.volume;
+    saveSettings();
+  });
+  audio.addEventListener('error', () => {
+    console.warn('Audio error — check that the source file exists.');
+    updatePlayUI();
+    setSliderDisabled(true);
+    cassette.classList.remove('switching');
+    isSwitching = false;
+  });
+
+  window.addEventListener('beforeunload', () => {
+    if (settings.playback.rememberPosition && !audio.paused) {
+      savedPosition = { trackIndex: currentIndex, currentTime: audio.currentTime };
+      try { sessionStorage.setItem('cassette:pos', JSON.stringify(savedPosition)); } catch {}
+    }
+  });
+  try {
+    const raw = sessionStorage.getItem('cassette:pos');
+    if (raw) savedPosition = JSON.parse(raw);
+  } catch {}
+
+  function updateMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+    const t = currentTrack();
+    if (!t) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: t.title, artist: t.archive || 'Cassette', album: t.catalogue || '',
+      });
+    } catch {}
+    if (!updateMediaSession._wired) {
+      updateMediaSession._wired = true;
+      const safe = (fn) => { try { navigator.mediaSession.setActionHandler(fn[0], fn[1]); } catch {} };
+      safe(['play', () => { audio.play().catch(() => {}); }]);
+      safe(['pause', () => { audio.pause(); }]);
+      safe(['previoustrack', () => switchTrack((currentIndex - 1 + TRACKS.length) % TRACKS.length)]);
+      safe(['nexttrack', () => switchTrack((currentIndex + 1) % TRACKS.length)]);
+      safe(['seekbackward', (d) => { audio.currentTime = Math.max(0, audio.currentTime - (d.seekOffset || 10)); }]);
+      safe(['seekforward', (d) => { audio.currentTime = Math.min(duration, audio.currentTime + (d.seekOffset || 10)); }]);
+    }
+  }
+
+  function handleTrackEnded() {
+    if (!settings.playback.autoplayNext && settings.playback.repeat === 'off') return;
+    if (settings.playback.repeat === 'one') {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+      return;
+    }
+    let next;
+    if (settings.playback.shuffle && TRACKS.length > 1) {
+      do { next = Math.floor(Math.random() * TRACKS.length); } while (next === currentIndex);
+    } else {
+      next = currentIndex + 1;
+      if (next >= TRACKS.length) {
+        if (settings.playback.repeat === 'all') next = 0;
+        else return;
+      }
+    }
+    switchTrack(next);
+  }
+
+  function replaceCaptionTrack(vttUrl) {
+    audio.querySelectorAll('track').forEach(t => t.remove());
+    if (!vttUrl) return;
+    const track = document.createElement('track');
+    track.kind = 'captions';
+    track.label = 'English';
+    track.srclang = 'en';
+    track.src = vttUrl;
+    track.default = true;
+    audio.appendChild(track);
+  }
+
+  function switchTrack(index, opts = {}) {
+    if (index === currentIndex && opts.force !== true) return;
+    if (index < 0 || index >= TRACKS.length) return;
+
+    const wasPlaying = !audio.paused && !audio.ended;
+
+    if (restartRafId) { cancelAnimationFrame(restartRafId); restartRafId = null; }
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+
+    isSwitching = true;
+    cassette.classList.add('switching');
+    audio.pause();
+
+    currentIndex = index;
+    const t = currentTrack();
+    settings.trackIndex = currentIndex;
+    saveSettings();
+
+    updateLabel();
+    syncVisiblePlaylist();
+
+    duration = 0;
+    audio.currentTime = 0;
+    updateVisuals(0);
+    updateTimeDisplay();
+    setSliderDisabled(true);
+    updatePlayUI();
+
+    replaceCaptionTrack(t.vtt);
+    audio.src = t.src;
+    audio.load();
+
+    if (wasPlaying || opts.autoplay === true) {
+      const onCanPlay = () => {
+        audio.removeEventListener('canplay', onCanPlay);
+        audio.play().catch(() => {});
+      };
+      audio.addEventListener('canplay', onCanPlay);
+    }
+  }
+
+  /* Playlist rendering */
+  function buildVisiblePlaylist() {
+    playlistTabs.innerHTML = '';
+    if (TRACKS.length === 0) {
+      playlistTabs.innerHTML =
+        '<div class="playlist-empty" style="width:100%">' +
+          '<strong>No tapes yet</strong>' +
+          'Click <b>Add</b> above to load songs from your device.' +
+        '</div>';
+    } else {
+      TRACKS.forEach((track, i) => {
+        const isUser = !!track._userAdded;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'playlist-tab' + (isUser ? ' has-remove' : '');
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('aria-selected', 'false');
+        btn.setAttribute('aria-label',
+          'Track ' + (i + 1) + ', ' + track.title +
+          (track.archive ? ', ' + track.archive : ''));
+        btn.title = (track.archive ? track.archive + ' · ' : '') +
+                    (track.catalogue || '') +
+                    (track.side ? ' · ' + track.side : '');
+        btn.dataset.index = String(i);
+        btn.innerHTML =
+          '<span class="tab-index" aria-hidden="true"></span>' +
+          '<span class="tab-stripe" aria-hidden="true"><span></span><span></span><span></span></span>' +
+          '<span class="tab-text">' +
+            '<span class="tab-title"></span>' +
+            '<span class="tab-meta"></span>' +
+          '</span>' +
+          '<span class="tab-dot" aria-hidden="true"></span>' +
+          (isUser
+            ? '<button class="tab-remove" type="button" aria-label="Remove ' + escapeHtml(track.title) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
+            : '');
+        btn.querySelector('.tab-index').textContent = pad2(i + 1);
+        btn.querySelector('.tab-title').textContent = track.title;
+        const metaBits = [track.archive, track.catalogue].filter(Boolean);
+        btn.querySelector('.tab-meta').textContent = metaBits.join(' · ');
+        btn.addEventListener('click', (e) => {
+          const removeBtn = e.target.closest('.tab-remove');
+          if (removeBtn) {
+            e.stopPropagation();
+            removeUserTrack(i);
+            return;
+          }
+          switchTrack(i, { userInitiated: true });
+        });
+        playlistTabs.appendChild(btn);
+      });
+    }
+    playlistCount.textContent = TRACKS.length + (TRACKS.length === 1 ? ' tape' : ' tapes');
+  }
+
+  function syncVisiblePlaylist() {
+    const items = playlistTabs.querySelectorAll('.playlist-tab');
+    items.forEach((el, i) => {
+      const active = i === currentIndex;
+      el.classList.toggle('active', active);
+      el.setAttribute('aria-selected', active ? 'true' : 'false');
+      el.tabIndex = active ? 0 : -1;
+    });
+    const activeEl = items[currentIndex];
+    if (activeEl && typeof activeEl.scrollIntoView === 'function') {
+      activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+
+  /* Add songs */
+  addSongsBtn.addEventListener('click', () => addSongsInput.click());
+
+  addSongsInput.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []);
+    addSongsInput.value = '';
+    if (files.length === 0) return;
+
+    const audioFiles = files.filter(f =>
+      (f.type && f.type.startsWith('audio/')) ||
+      /\.(mp3|m4a|ogg|wav|flac|opus|webm|aac)$/i.test(f.name)
+    );
+    if (audioFiles.length === 0) {
+      console.warn('[cassette] No audio files selected.');
+      return;
+    }
+
+    addSongsBtn.disabled = true;
+    const originalLabel = addSongsBtn.textContent;
+    addSongsBtn.textContent = 'Adding…';
+
+    for (const file of audioFiles) {
+      const title = file.name.replace(/\.[^.]+$/, '').trim() || 'Untitled';
+      const catalogue = randomCatalogueId();
+      const id = await idbAdd({
+        name: file.name,
+        title,
+        catalogue,
+        blob: file,
+        type: file.type || 'audio/mpeg',
+      });
+      const url = URL.createObjectURL(file);
+      TRACKS.push({
+        title,
+        archive: 'User upload',
+        catalogue,
+        side: 'Side A',
+        src: url,
+        vtt: '',
+        _idbId: id,
+        _userAdded: true,
+      });
+    }
+
+    buildVisiblePlaylist();
+    syncVisiblePlaylist();
+
+    addSongsBtn.disabled = false;
+    addSongsBtn.textContent = originalLabel;
+  });
+
+  async function removeUserTrack(index) {
+    const t = TRACKS[index];
+    if (!t || !t._userAdded) return;
+
+    if (t._idbId != null) {
+      try { await idbDelete(t._idbId); } catch {}
+    }
+
+    const wasCurrent = (index === currentIndex);
+    const wasPlaying = !audio.paused && !audio.ended;
+
+    TRACKS.splice(index, 1);
+
+    if (TRACKS.length === 0) {
+      try { audio.pause(); audio.removeAttribute('src'); audio.load(); } catch {}
+      currentIndex = 0;
+      duration = 0;
+      updateVisuals(0);
+      updateTimeDisplay();
+      setSliderDisabled(true);
+      updateLabel();
+      updatePlayUI();
+      buildVisiblePlaylist();
+    } else if (wasCurrent) {
+      const target = Math.min(index, TRACKS.length - 1);
+      currentIndex = -1;
+      switchTrack(target, { force: true, autoplay: wasPlaying });
+    } else {
+      if (index < currentIndex) currentIndex--;
+      buildVisiblePlaylist();
+      syncVisiblePlaylist();
+    }
+
+    if (t.src && t.src.startsWith('blob:')) {
+      setTimeout(() => { try { URL.revokeObjectURL(t.src); } catch {} }, 1500);
+    }
+  }
+
+  async function loadUserTracks() {
+    const items = await idbGetAll();
+    if (!items || items.length === 0) return;
+    for (const item of items) {
+      if (!item || !item.blob) continue;
+      let url;
+      try {
+        url = URL.createObjectURL(item.blob);
+      } catch { continue; }
+      TRACKS.push({
+        title: item.title || (item.name || 'Untitled').replace(/\.[^.]+$/, ''),
+        archive: 'User upload',
+        catalogue: item.catalogue || randomCatalogueId(),
+        side: 'Side A',
+        src: url,
+        vtt: '',
+        _idbId: item.id,
+        _userAdded: true,
+      });
+    }
+  }
+
+  /* Shortcuts reference + editor */
+  function renderShortcutReference() {
+    const items = [
+      { keys: [settings.shortcuts.playPause], label: 'Play / Pause' },
+      { keys: [settings.shortcuts.mute], label: 'Mute' },
+      { keys: [settings.shortcuts.restart], label: 'Restart' },
+      { keys: [settings.shortcuts.prev, settings.shortcuts.next], label: 'Prev / Next', joined: true },
+      { keys: ['1', '–', '9'], label: 'Jump to track', literal: true },
+      { keys: ['Esc'], label: 'Close panels', literal: true },
+    ];
+    shortcutListRef.innerHTML = items.map(it => {
+      const keyHtml = it.literal
+        ? it.keys.map(k => k === '–' ? '<span class="sep">–</span>' : `<kbd>${k}</kbd>`).join('')
+        : it.keys.map(k => `<kbd>${escapeHtml(prettyKeyCombo(k))}</kbd>`).join(it.joined ? '<span class="sep">/</span>' : '<span class="sep">+</span>');
+      return `<li><span class="shortcut-keys">${keyHtml}</span><span class="shortcut-label">${it.label}</span></li>`;
+    }).join('');
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function prettyKeyCombo(combo) {
+    return combo
+      .replace(/ArrowUp/g, '↑')
+      .replace(/ArrowDown/g, '↓')
+      .replace(/ArrowLeft/g, '←')
+      .replace(/ArrowRight/g, '→')
+      .replace(/Space/g, 'Space');
+  }
+
+  function renderShortcutEditor() {
+    shortcutEditor.innerHTML = '';
+    SHORTCUT_ACTIONS.forEach(action => {
+      const row = document.createElement('div');
+      row.className = 'shortcut-row';
+      row.innerHTML =
+        `<span class="shortcut-row-label">${action.label}</span>` +
+        `<button class="key-badge" type="button" data-action="${action.id}"></button>` +
+        `<button class="key-reset" type="button" aria-label="Reset ${action.label}" data-action="${action.id}">` +
+          `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>` +
+        `</button>`;
+      shortcutEditor.appendChild(row);
+    });
+    refreshShortcutEditor();
+  }
+
+  function refreshShortcutEditor() {
+    shortcutEditor.querySelectorAll('.key-badge').forEach(badge => {
+      const id = badge.dataset.action;
+      const current = settings.shortcuts[id];
+      const isDefault = current === DEFAULT_SHORTCUTS[id];
+      badge.textContent = prettyKeyCombo(current);
+      badge.classList.toggle('custom', !isDefault);
+      badge.classList.toggle('listening', listeningAction === id);
+      if (listeningAction === id) badge.textContent = 'Press a key…';
+    });
+    shortcutEditor.querySelectorAll('.key-reset').forEach(btn => {
+      const id = btn.dataset.action;
+      const isDefault = settings.shortcuts[id] === DEFAULT_SHORTCUTS[id];
+      btn.disabled = isDefault;
+    });
+  }
+
+  shortcutEditor.addEventListener('click', (e) => {
+    const badge = e.target.closest('.key-badge');
+    if (badge) { startListening(badge.dataset.action); return; }
+    const reset = e.target.closest('.key-reset');
+    if (reset) {
+      const id = reset.dataset.action;
+      settings.shortcuts[id] = DEFAULT_SHORTCUTS[id];
+      saveSettings();
+      refreshShortcutEditor();
+      renderShortcutReference();
+      return;
+    }
+  });
+
+  function startListening(actionId) {
+    if (listeningAction) stopListening();
+    listeningAction = actionId;
+    refreshShortcutEditor();
+    shortcutKeydownHandler = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === 'Escape') { stopListening(); return; }
+      if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return;
+      const combo = keyEventToCombo(e);
+      if (!combo) return;
+      settings.shortcuts[actionId] = combo;
+      saveSettings();
+      stopListening();
+      refreshShortcutEditor();
+      renderShortcutReference();
+    };
+    document.addEventListener('keydown', shortcutKeydownHandler, true);
+  }
+  function stopListening() {
+    if (shortcutKeydownHandler) {
+      document.removeEventListener('keydown', shortcutKeydownHandler, true);
+      shortcutKeydownHandler = null;
+    }
+    listeningAction = null;
+    refreshShortcutEditor();
+  }
+
+  function keyEventToCombo(e) {
+    const parts = [];
+    if (e.ctrlKey || e.metaKey) parts.push('Ctrl');
+    if (e.altKey) parts.push('Alt');
+    if (e.shiftKey && e.key.length !== 1) parts.push('Shift');
+    let key = e.key;
+    if (key === ' ') key = 'Space';
+    else if (key.length === 1) key = key.toUpperCase();
+    parts.push(key);
+    return parts.join('+');
+  }
+
+  resetAllShortcuts.addEventListener('click', () => {
+    settings.shortcuts = { ...DEFAULT_SHORTCUTS };
+    saveSettings();
+    refreshShortcutEditor();
+    renderShortcutReference();
+  });
+
+  function togglePopup(btn, panel, forceOpen) {
+    const isOpen = panel.getAttribute('data-open') === 'true';
+    const open = forceOpen === undefined ? !isOpen : forceOpen;
+    panel.setAttribute('data-open', open ? 'true' : 'false');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  shortcutsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePopup(shortcutsBtn, shortcutsPanel);
+    togglePopup(settingsBtn, settingsPanel, false);
+  });
+  settingsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePopup(settingsBtn, settingsPanel);
+    togglePopup(shortcutsBtn, shortcutsPanel, false);
+  });
+  settingsClose.addEventListener('click', () => togglePopup(settingsBtn, settingsPanel, false));
+
+  document.addEventListener('click', (e) => {
+    if (shortcutsPanel.getAttribute('data-open') === 'true'
+        && !shortcutsPanel.contains(e.target)
+        && !shortcutsBtn.contains(e.target)) {
+      togglePopup(shortcutsBtn, shortcutsPanel, false);
+    }
+    if (settingsPanel.getAttribute('data-open') === 'true'
+        && !settingsPanel.contains(e.target)
+        && !settingsBtn.contains(e.target)) {
+      togglePopup(settingsBtn, settingsPanel, false);
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (listeningAction) return;
+    if (settingsPanel.getAttribute('data-open') === 'true') {
+      togglePopup(settingsBtn, settingsPanel, false);
+      settingsBtn.focus();
+    }
+    if (shortcutsPanel.getAttribute('data-open') === 'true') {
+      togglePopup(shortcutsBtn, shortcutsPanel, false);
+      shortcutsBtn.focus();
+    }
+  });
+
+  document.querySelectorAll('[data-appearance-mode]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.appearanceMode;
+      if (mode === settings.appearance) return;
+      settings.appearance = mode;
+      if (mode === 'gradient' && !settings.gradient.palette) {
+        settings.gradient.palette = generatePalette();
+      }
+      saveSettings();
+      applySettings();
+    });
+  });
+
+  darkModeToggle.addEventListener('change', () => {
+    const next = darkModeToggle.checked ? 'dark' : 'light';
+    if (next === settings.theme) return;
+    document.body.classList.add('theme-transitioning');
+    settings.theme = next;
+    saveSettings();
+    applySettings();
+    setTimeout(() => document.body.classList.remove('theme-transitioning'), 400);
+  });
+
+  gradientAnimated.addEventListener('change', () => {
+    settings.gradient.animated = gradientAnimated.checked;
+    saveSettings();
+    applySettings();
+  });
+  gradientBlur.addEventListener('input', () => {
+    settings.gradient.blur = parseInt(gradientBlur.value, 10);
+    gradientBlurVal.textContent = settings.gradient.blur + 'px';
+    document.documentElement.style.setProperty('--grad-blur', settings.gradient.blur + 'px');
+    saveSettings();
+  });
+  rerollPalette.addEventListener('click', () => {
+    settings.gradient.palette = generatePalette();
+    saveSettings();
+    applyPalette(settings.gradient.palette);
+    if (settings.appearance !== 'gradient') {
+      settings.appearance = 'gradient';
+      saveSettings();
+      applySettings();
+    }
+  });
+
+  wallpaperApply.addEventListener('click', () => {
+    settings.wallpaper.url = wallpaperUrl.value.trim();
+    saveSettings();
+    applySettings();
+  });
+  wallpaperUrl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') wallpaperApply.click();
+  });
+  wallpaperUpload.addEventListener('click', () => wallpaperFile.click());
+  wallpaperFile.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      settings.wallpaper.url = reader.result;
+      settings.appearance = 'wallpaper';
+      saveSettings();
+      applySettings();
+    };
+    reader.readAsDataURL(file);
+    wallpaperFile.value = '';
+  });
+  wallpaperClear.addEventListener('click', () => {
+    settings.wallpaper.url = '';
+    wallpaperUrl.value = '';
+    saveSettings();
+    applySettings();
+  });
+  wallpaperDim.addEventListener('input', () => {
+    settings.wallpaper.dim = parseFloat(wallpaperDim.value);
+    wallpaperDimVal.textContent = Math.round(settings.wallpaper.dim * 100) + '%';
+    document.documentElement.style.setProperty('--wall-dim', String(settings.wallpaper.dim));
+    saveSettings();
+  });
+
+  optShuffle.addEventListener('change', () => {
+    settings.playback.shuffle = optShuffle.checked;
+    saveSettings();
+  });
+  document.querySelectorAll('[data-repeat]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      settings.playback.repeat = btn.dataset.repeat;
+      saveSettings();
+      applySettings();
+    });
+  });
+  optAutoplayNext.addEventListener('change', () => {
+    settings.playback.autoplayNext = optAutoplayNext.checked;
+    saveSettings();
+  });
+  optRememberPosition.addEventListener('change', () => {
+    settings.playback.rememberPosition = optRememberPosition.checked;
+    saveSettings();
+  });
+
+  optPerfMode.addEventListener('change', () => {
+    settings.performance.enabled = optPerfMode.checked;
+    saveSettings();
+    applySettings();
+  });
+  optAnimations.addEventListener('change', () => {
+    settings.performance.animations = optAnimations.checked;
+    saveSettings();
+    applySettings();
+  });
+  optReels.addEventListener('change', () => {
+    settings.performance.reels = optReels.checked;
+    saveSettings();
+    applySettings();
+  });
+  optBlur.addEventListener('change', () => {
+    settings.performance.blur = optBlur.checked;
+    saveSettings();
+    applySettings();
+  });
+
+  resetAllSettings.addEventListener('click', () => {
+    if (!confirm('Reset every setting to defaults? This clears appearance, theme, shortcuts, playback and performance preferences.')) return;
+    settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+    saveSettings();
+    applySettings();
+    try { sessionStorage.removeItem('cassette:pos'); } catch {}
+    savedPosition = null;
+    setMinimized(false);
+  });
+
+  function matchesCombo(e, combo) {
+    if (!combo) return false;
+    const parts = combo.split('+');
+    const key = parts[parts.length - 1];
+    const mods = parts.slice(0, -1);
+    const wantCtrl = mods.includes('Ctrl');
+    const wantShift = mods.includes('Shift');
+    const wantAlt = mods.includes('Alt');
+    if (wantCtrl !== (e.ctrlKey || e.metaKey)) return false;
+    if (wantAlt !== e.altKey) return false;
+    if (wantShift !== e.shiftKey && e.key.length !== 1) return false;
+    let eKey = e.key;
+    if (eKey === ' ') eKey = 'Space';
+    else if (eKey.length === 1) eKey = eKey.toUpperCase();
+    return eKey === key;
+  }
+
+  const SLIDER_KEYS = ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','Home','End'];
+  document.addEventListener('keydown', (e) => {
+    if (listeningAction) return;
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+    if (document.activeElement === slider && SLIDER_KEYS.includes(e.key)) return;
+
+    if (matchesCombo(e, settings.shortcuts.playPause)) {
+      if (tag === 'BUTTON' || tag === 'A') return;
+      e.preventDefault();
+      togglePlay();
+      return;
+    }
+    if (matchesCombo(e, settings.shortcuts.mute)) { e.preventDefault(); doMute(); return; }
+    if (matchesCombo(e, settings.shortcuts.restart)) {
+      if (!audio.paused) { e.preventDefault(); doRestart(); }
+      return;
+    }
+    if (matchesCombo(e, settings.shortcuts.next)) {
+      e.preventDefault();
+      if (TRACKS.length > 0) switchTrack((currentIndex + 1) % TRACKS.length);
+      return;
+    }
+    if (matchesCombo(e, settings.shortcuts.prev)) {
+      e.preventDefault();
+      if (TRACKS.length > 0) switchTrack((currentIndex - 1 + TRACKS.length) % TRACKS.length);
+      return;
+    }
+    for (let i = 1; i <= 9; i++) {
+      if (matchesCombo(e, settings.shortcuts['jump' + i])) {
+        const idx = i - 1;
+        if (idx < TRACKS.length) {
+          e.preventDefault();
+          switchTrack(idx, { userInitiated: true });
+        }
+        return;
+      }
+    }
+  });
+
+  async function init() {
+    await loadUserTracks();
+    buildVisiblePlaylist();
+    applySettings();
+    updateMuteUI();
+    updateVisuals(0);
+    updateTimeDisplay();
+    setSliderDisabled(true);
+
+    setMinimized(!!settings.minimized);
+
+    const startIdx = Math.max(0, Math.min(TRACKS.length - 1, settings.trackIndex | 0));
+    if (TRACKS.length > 0) {
+      currentIndex = -1;
+      switchTrack(startIdx, { force: true });
+    } else {
+      updateLabel();
+      updatePlayUI();
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
