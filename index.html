@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Cassette Audio Player | bon</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,7 +66,11 @@ body[data-theme="dark"] {
   --progress-thumb-border: #f0efed;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 html, body { min-height: 100%; }
 
 body {
@@ -80,50 +83,11 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   min-height: 100vh;
-  -webkit-tap-highlight-color: transparent;
-}
-
-button,
-.playlist-tab,
-.fab,
-.act-btn,
-.seg-btn,
-.key-badge,
-.key-reset,
-.tab-remove,
-.settings-close,
-.corner-btn,
-.ctrl-btn,
-.mini-btn {
-  touch-action: manipulation;
 }
 
 body.theme-transitioning,
 body.theme-transitioning * {
   transition: background-color .3s ease, color .3s ease, border-color .3s ease !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   DEVICE-AWARE VISIBILITY
-   Driven by body[data-device] and body[data-has-keyboard]
-   set by the inline probe in <body> + the main script.
-   ═══════════════════════════════════════════════════════════ */
-
-/* Hide the shortcuts FAB / panel / settings section
-   whenever no physical keyboard is available. */
-body[data-has-keyboard="false"] .fab-shortcuts,
-body[data-has-keyboard="false"] .shortcuts-panel,
-body[data-has-keyboard="false"] .setting-section-shortcuts {
-  display: none !important;
-}
-
-/* On touch devices, always show the tab-remove affordance. */
-@media (hover: none) and (pointer: coarse) {
-  .playlist-tab .tab-remove {
-    opacity: 0.6;
-    pointer-events: auto;
-  }
-  .playlist-tab .tab-remove:active { opacity: 1; }
 }
 
 .gradient-bg {
@@ -173,18 +137,42 @@ body[data-blur="off"] .volume-popup {
 
 body[data-reels="off"] .reel svg { transform: none !important; }
 
-main { max-width: 56rem; margin: 0 auto; position: relative; z-index: 1; }
+main {
+  max-width: 56rem;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
 .content { padding: 2rem 2rem 4rem; }
-header { padding-left: 0.75rem; padding-right: 0.75rem; }
+header {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
 .logo {
   font-family: 'Pirata One', Georgia, 'Times New Roman', serif;
   font-size: 2.25rem; line-height: 1; font-weight: 400; letter-spacing: 0.01em;
 }
-.logo a { color: var(--grayscale-12); text-decoration: none; }
-.kitchen { font-size: 0.875rem; font-weight: 500; color: var(--grayscale-10); }
-.kitchen a { color: inherit; text-decoration: none; transition: color .15s; }
+.logo a {
+  color: var(--grayscale-12);
+  text-decoration: none;
+}
+.kitchen {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--grayscale-10);
+}
+.kitchen a {
+  color: inherit;
+  text-decoration: none;
+  transition: color .15s;
+}
 .kitchen a:hover { color: var(--grayscale-11); }
-.page-title { margin-top: 2rem; font-size: 0.875rem; font-weight: 500; color: var(--grayscale-12); }
+.page-title {
+  margin-top: 2rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--grayscale-12);
+}
 .page-subtitle {
   margin-top: 1px; max-width: 28rem; color: var(--grayscale-10);
   font-size: 0.875rem; line-height: 1.25rem;
@@ -207,7 +195,12 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
   color: var(--grayscale-12);
   container-type: inline-size;
 }
-.player-inner { position: relative; z-index: 1; width: 100%; max-width: 530px; }
+.player-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 530px;
+}
 
 .player-corner-controls {
   position: absolute;
@@ -231,7 +224,10 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
   border-color: var(--grayscale-5);
 }
 .corner-btn:active { transform: scale(0.94); }
-.corner-btn:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
+.corner-btn:focus-visible {
+  outline: 2px solid var(--grayscale-12);
+  outline-offset: 2px;
+}
 .corner-btn svg {
   width: 14px; height: 14px;
   fill: none; stroke: currentColor;
@@ -281,10 +277,22 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.82), 0 1px rgba(255, 255, 255, 0.1);
 }
 .screw::after { transform: translateY(-50%) rotate(-45deg); }
-.screw.tl { top: 4%; left: 2.53%; }
-.screw.tr { top: 4%; right: 2.53%; }
-.screw.bl { bottom: 4%; left: 2.53%; }
-.screw.br { bottom: 4%; right: 2.53%; }
+.screw.tl {
+  top: 4%;
+  left: 2.53%;
+}
+.screw.tr {
+  top: 4%;
+  right: 2.53%;
+}
+.screw.bl {
+  bottom: 4%;
+  left: 2.53%;
+}
+.screw.br {
+  bottom: 4%;
+  right: 2.53%;
+}
 
 .label {
   position: absolute; z-index: 1;
@@ -301,7 +309,12 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
   margin: 1rem 1rem 0;
   display: flex; align-items: stretch; justify-content: space-between;
 }
-.label-header-left { display: grid; min-width: 0; align-content: space-between; gap: 0.5rem 0; }
+.label-header-left {
+  display: grid;
+  min-width: 0;
+  align-content: space-between;
+  gap: 0.5rem 0;
+}
 .label-header-right {
   margin-left: 0.5rem; display: grid; flex-shrink: 0;
   align-content: space-between; justify-items: end; gap: 0.5rem 0;
@@ -337,7 +350,11 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
 }
 .catalogue:empty { display: none; }
 
-.reel-section { position: relative; margin-top: 1rem; height: 34%; }
+.reel-section {
+  position: relative;
+  margin-top: 1rem;
+  height: 34%;
+}
 
 .stripes {
   position: absolute; left: -0.25rem; right: -0.25rem;
@@ -383,8 +400,14 @@ header { padding-left: 0.75rem; padding-right: 0.75rem; }
   box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.7), 0 1px 2px rgba(0, 0, 0, 0.5);
   will-change: transform;
 }
-.tape-bundle.left { left: calc(50cqh - 28cqw); --scale: var(--left-tape-scale, 1); }
-.tape-bundle.right { left: calc(72cqw - 50cqh); --scale: var(--right-tape-scale, 0.6); }
+.tape-bundle.left {
+  left: calc(50cqh - 28cqw);
+  --scale: var(--left-tape-scale, 1);
+}
+.tape-bundle.right {
+  left: calc(72cqw - 50cqh);
+  --scale: var(--right-tape-scale, 0.6);
+}
 .tape-divider {
   position: relative; z-index: 1;
   width: 2px; height: 42%;
@@ -414,7 +437,7 @@ body.playing .reel svg { will-change: transform; }
 .progress-slider {
   position: relative; height: 1.5rem; width: 100%;
   display: flex; align-items: center;
-  cursor: pointer; touch-action: none;
+  cursor: pointer;
   user-select: none; -webkit-user-select: none;
 }
 .progress-slider.disabled { cursor: default; }
@@ -478,8 +501,14 @@ body.playing .reel svg { will-change: transform; }
   transition: background-color .15s ease-out, opacity .15s ease-out, transform .15s ease-out;
 }
 .ctrl-btn:active { transform: scale(0.96); }
-.ctrl-btn:focus-visible { outline: 2px solid white; outline-offset: 3px; }
-.ctrl-btn:disabled { cursor: not-allowed; opacity: 0.45; }
+.ctrl-btn:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
+}
+.ctrl-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
 .ctrl-btn:disabled:active { transform: none; }
 .ctrl-btn.small {
   width: clamp(24px, 6.5cqw, 32px);
@@ -494,14 +523,21 @@ body.playing .reel svg { will-change: transform; }
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .ctrl-btn.large:hover { background: #82827c; }
-.ctrl-btn svg { width: 16px; height: 16px; fill: currentColor; display: block; }
-.ctrl-btn.large svg { width: 18px; height: 18px; }
+.ctrl-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  display: block;
+}
+.ctrl-btn.large svg {
+  width: 18px;
+  height: 18px;
+}
 
-.volume-wrap { position: relative; display: grid; place-items: center; }
-.volume-wrap .ctrl-btn {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
+.volume-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
 }
 .volume-popup {
   position: absolute;
@@ -521,8 +557,7 @@ body.playing .reel svg { will-change: transform; }
   z-index: 20;
 }
 .volume-wrap:hover .volume-popup,
-.volume-wrap:focus-within .volume-popup,
-body.volume-revealed .volume-popup {
+.volume-wrap:focus-within .volume-popup {
   opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s;
   transform: translate(-50%, 0);
 }
@@ -601,8 +636,14 @@ body.volume-revealed .volume-popup {
   border-color: var(--grayscale-5);
 }
 .playlist-add-btn:active { transform: scale(0.97); }
-.playlist-add-btn:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
-.playlist-add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.playlist-add-btn:focus-visible {
+  outline: 2px solid var(--grayscale-12);
+  outline-offset: 2px;
+}
+.playlist-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .playlist-add-btn svg {
   width: 11px; height: 11px;
   fill: none; stroke: currentColor;
@@ -620,7 +661,10 @@ body.volume-revealed .volume-popup {
   scrollbar-color: var(--grayscale-4) transparent;
 }
 .playlist-tabs::-webkit-scrollbar { width: 6px; }
-.playlist-tabs::-webkit-scrollbar-thumb { background: var(--grayscale-4); border-radius: 999px; }
+.playlist-tabs::-webkit-scrollbar-thumb {
+  background: var(--grayscale-4);
+  border-radius: 999px;
+}
 .playlist-tabs::-webkit-scrollbar-track { background: transparent; }
 
 .playlist-tab {
@@ -637,8 +681,14 @@ body.volume-revealed .volume-popup {
   transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
   text-align: left; width: 100%; flex-shrink: 0;
 }
-.playlist-tab:hover { background: var(--grayscale-2); color: var(--grayscale-11); }
-.playlist-tab:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
+.playlist-tab:hover {
+  background: var(--grayscale-2);
+  color: var(--grayscale-11);
+}
+.playlist-tab:focus-visible {
+  outline: 2px solid var(--grayscale-12);
+  outline-offset: 2px;
+}
 .playlist-tab.active {
   background: var(--grayscale-12); color: var(--grayscale-1);
   border-color: var(--grayscale-12);
@@ -659,7 +709,14 @@ body.volume-revealed .volume-popup {
 .tab-stripe span:nth-child(3) { background: var(--label-stripe-three); }
 .playlist-tab.active .tab-stripe { border-color: rgba(255, 255, 255, 0.35); }
 
-.tab-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; line-height: 1.15; }
+.tab-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+  line-height: 1.15;
+}
 .tab-title {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   font-weight: 600; letter-spacing: -0.005em;
@@ -678,7 +735,10 @@ body.volume-revealed .volume-popup {
   color: var(--grayscale-8);
   flex-shrink: 0; min-width: 1.2rem;
 }
-.playlist-tab.active .tab-index { color: currentColor; opacity: 0.75; }
+.playlist-tab.active .tab-index {
+  color: currentColor;
+  opacity: 0.75;
+}
 
 .tab-remove {
   position: absolute;
@@ -688,7 +748,6 @@ body.volume-revealed .volume-popup {
   border-radius: 5px; border: none;
   background: transparent;
   color: inherit;
-  /* Keep the control usable even when the browser reports no hover device. */
   opacity: 0.45;
   pointer-events: auto;
   cursor: pointer;
@@ -696,15 +755,18 @@ body.volume-revealed .volume-popup {
   transition: opacity .13s, background-color .13s;
   padding: 0;
 }
-@media (hover: hover) {
-  .playlist-tab:not(:hover):not(:focus-within) .tab-remove {
-    opacity: 0;
-    pointer-events: none;
-  }
-  .playlist-tab:hover .tab-remove { opacity: 0.55; pointer-events: auto; }
+.playlist-tab:hover .tab-remove {
+  opacity: 0.55;
+  pointer-events: auto;
 }
-.playlist-tab:focus-within .tab-remove { opacity: 0.55; pointer-events: auto; }
-.tab-remove:hover { opacity: 1; background: rgba(0,0,0,0.08); }
+.playlist-tab:focus-within .tab-remove {
+  opacity: 0.55;
+  pointer-events: auto;
+}
+.tab-remove:hover {
+  opacity: 1;
+  background: rgba(0,0,0,0.08);
+}
 .playlist-tab.active .tab-remove:hover { background: rgba(255,255,255,0.18); }
 body[data-theme="dark"] .tab-remove:hover { background: rgba(255,255,255,0.08); }
 body[data-theme="dark"] .playlist-tab.active .tab-remove:hover { background: rgba(0,0,0,0.15); }
@@ -756,8 +818,15 @@ body.animations-off .playlist-tab[data-playing="true"] .tab-dot { animation: non
               background-color .18s ease, color .18s ease,
               border-color .18s ease, box-shadow .18s ease;
 }
-.fab:hover { background: var(--grayscale-2); color: var(--grayscale-12); transform: translateY(-2px); }
-.fab:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 3px; }
+.fab:hover {
+  background: var(--grayscale-2);
+  color: var(--grayscale-12);
+  transform: translateY(-2px);
+}
+.fab:focus-visible {
+  outline: 2px solid var(--grayscale-12);
+  outline-offset: 3px;
+}
 .fab[aria-expanded="true"] {
   background: var(--grayscale-12); color: var(--grayscale-1); border-color: var(--grayscale-12);
 }
@@ -767,14 +836,14 @@ body.animations-off .playlist-tab[data-playing="true"] .tab-dot { animation: non
   stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
 }
 .fab-settings {
-  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
-  right: calc(1.5rem + env(safe-area-inset-right, 0px));
+  bottom: 1.5rem;
+  right: 1.5rem;
 }
 .fab-settings svg { transition: transform .35s cubic-bezier(0.23,1,0.32,1); }
 .fab-settings[aria-expanded="true"] svg { transform: rotate(90deg); }
 .fab-shortcuts {
-  top: calc(1rem + env(safe-area-inset-top, 0px));
-  right: calc(1rem + env(safe-area-inset-right, 0px));
+  top: 1rem;
+  right: 1rem;
 }
 
 .popup {
@@ -789,12 +858,17 @@ body.animations-off .playlist-tab[data-playing="true"] .tab-dot { animation: non
   visibility: hidden;
   transition: opacity .16s ease, transform .2s cubic-bezier(0.23,1,0.32,1), visibility 0s linear .2s;
 }
-.popup[data-open="true"] { opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s; }
+.popup[data-open="true"] {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transition-delay: 0s;
+}
 
 .shortcuts-panel {
-  top: calc(4.25rem + env(safe-area-inset-top, 0px));
-  right: calc(1rem + env(safe-area-inset-right, 0px));
-  width: min(17rem, calc(100vw - 1.5rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+  top: 4.25rem;
+  right: 1rem;
+  width: min(17rem, calc(100vw - 1.5rem));
   padding: 0.85rem;
   transform: translateY(-6px) scale(0.98);
   transform-origin: top right;
@@ -808,11 +882,21 @@ body.animations-off .playlist-tab[data-playing="true"] .tab-dot { animation: non
   margin-bottom: 0.6rem; padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--grayscale-3);
 }
-.shortcut-list { display: flex; flex-direction: column; gap: 0.4rem; list-style: none; }
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  list-style: none;
+}
 .shortcut-list li {
   display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
 }
-.shortcut-keys { display: flex; align-items: center; gap: 0.2rem; flex-shrink: 0; }
+.shortcut-keys {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
 kbd {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 0.65rem; font-weight: 600;
@@ -824,13 +908,21 @@ kbd {
   box-shadow: 0 1px 0 rgba(0,0,0,0.04), inset 0 -1px 0 rgba(0,0,0,0.04);
   min-width: 1.4rem; text-align: center; line-height: 1;
 }
-.shortcut-keys .sep { font-size: 0.6rem; color: var(--grayscale-7); padding: 0 1px; }
-.shortcut-label { color: var(--grayscale-10); font-size: 0.78rem; text-align: right; }
+.shortcut-keys .sep {
+  font-size: 0.6rem;
+  color: var(--grayscale-7);
+  padding: 0 1px;
+}
+.shortcut-label {
+  color: var(--grayscale-10);
+  font-size: 0.78rem;
+  text-align: right;
+}
 
 .settings-panel {
-  bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
-  right: calc(1.5rem + env(safe-area-inset-right, 0px));
-  width: min(24rem, calc(100vw - 2rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+  bottom: 5rem;
+  right: 1.5rem;
+  width: min(24rem, calc(100vw - 2rem));
   max-height: calc(100vh - 8rem);
   max-height: calc(100dvh - 8rem);
   display: flex; flex-direction: column;
@@ -855,14 +947,27 @@ kbd {
   cursor: pointer; display: grid; place-items: center;
   transition: background-color .13s, color .13s;
 }
-.settings-close:hover { background: var(--grayscale-3); color: var(--grayscale-12); }
-.settings-close svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.settings-close:hover {
+  background: var(--grayscale-3);
+  color: var(--grayscale-12);
+}
+.settings-close svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
 .settings-body {
   overflow-y: auto; padding: 0.85rem 1rem 1rem;
   scrollbar-width: thin; scrollbar-color: var(--grayscale-4) transparent;
 }
 .settings-body::-webkit-scrollbar { width: 6px; }
-.settings-body::-webkit-scrollbar-thumb { background: var(--grayscale-4); border-radius: 999px; }
+.settings-body::-webkit-scrollbar-thumb {
+  background: var(--grayscale-4);
+  border-radius: 999px;
+}
 
 .setting-section { margin-bottom: 1.25rem; }
 .setting-section:last-child { margin-bottom: 0; }
@@ -886,27 +991,11 @@ kbd {
   color: var(--grayscale-9); font-size: 0.75rem; line-height: 1.4;
   padding: 0 0 0.6rem; font-style: italic;
 }
-.setting-sub { padding-left: 0.6rem; border-left: 2px solid var(--grayscale-3); margin-top: 0.3rem; }
-
-/* Device info pills in settings */
-.device-pill {
-  display: inline-flex; align-items: center;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.68rem; font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 6px;
-  background: var(--grayscale-3);
-  color: var(--grayscale-11);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  line-height: 1.2;
-  white-space: nowrap;
+.setting-sub {
+  padding-left: 0.6rem;
+  border-left: 2px solid var(--grayscale-3);
+  margin-top: 0.3rem;
 }
-body[data-theme="dark"] .device-pill { background: var(--grayscale-4); color: var(--grayscale-12); }
-.device-pill.ok { background: rgba(34,197,94,0.14); color: #15803d; }
-body[data-theme="dark"] .device-pill.ok { background: rgba(34,197,94,0.18); color: #4ade80; }
-.device-pill.warn { background: rgba(234,179,8,0.16); color: #a16207; }
-body[data-theme="dark"] .device-pill.warn { background: rgba(234,179,8,0.18); color: #facc15; }
 
 .seg {
   display: inline-flex; padding: 2px; gap: 2px;
@@ -925,10 +1014,24 @@ body[data-theme="dark"] .device-pill.warn { background: rgba(234,179,8,0.18); co
   background: var(--grayscale-1); color: var(--grayscale-12);
   box-shadow: 0 1px 2px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(0,0,0,0.04);
 }
-.seg-btn:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 1px; }
+.seg-btn:focus-visible {
+  outline: 2px solid var(--grayscale-12);
+  outline-offset: 1px;
+}
 
-.switch { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
-.switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
 .switch span {
   position: absolute; inset: 0; border-radius: 999px;
   background: var(--grayscale-4); transition: background-color .2s; cursor: pointer;
@@ -940,9 +1043,16 @@ body[data-theme="dark"] .device-pill.warn { background: rgba(234,179,8,0.18); co
 }
 .switch input:checked + span { background: var(--grayscale-12); }
 .switch input:checked + span::before { transform: translateX(16px); }
-.switch input:focus-visible + span { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
+.switch input:focus-visible + span {
+  outline: 2px solid var(--grayscale-12);
+  outline-offset: 2px;
+}
 
-.range-row { display: flex; align-items: center; gap: 0.6rem; }
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
 .range-row input[type="range"] {
   -webkit-appearance: none; appearance: none;
   background: transparent; flex: 1; min-width: 0; height: 20px; cursor: pointer;
@@ -979,19 +1089,39 @@ body[data-theme="dark"] .device-pill.warn { background: rgba(234,179,8,0.18); co
   cursor: pointer;
   transition: background-color .13s, color .13s, border-color .13s;
 }
-.act-btn:hover { background: var(--grayscale-2); color: var(--grayscale-12); border-color: var(--grayscale-5); }
-.act-btn:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
+.act-btn:hover {
+  background: var(--grayscale-2);
+  color: var(--grayscale-12);
+  border-color: var(--grayscale-5);
+}
+.act-btn:focus-visible {
+  outline: 2px solid var(--grayscale-12);
+  outline-offset: 2px;
+}
 .act-btn svg {
   width: 13px; height: 13px;
   fill: none; stroke: currentColor; stroke-width: 2;
   stroke-linecap: round; stroke-linejoin: round;
 }
-.act-btn.danger { color: #b91c1c; border-color: rgba(185,28,28,0.2); }
-.act-btn.danger:hover { background: #fef2f2; border-color: rgba(185,28,28,0.4); }
-body[data-theme="dark"] .act-btn.danger { color: #f87171; border-color: rgba(248,113,113,0.25); }
+.act-btn.danger {
+  color: #b91c1c;
+  border-color: rgba(185,28,28,0.2);
+}
+.act-btn.danger:hover {
+  background: #fef2f2;
+  border-color: rgba(185,28,28,0.4);
+}
+body[data-theme="dark"] .act-btn.danger {
+  color: #f87171;
+  border-color: rgba(248,113,113,0.25);
+}
 body[data-theme="dark"] .act-btn.danger:hover { background: rgba(248,113,113,0.1); }
 
-.input-row { display: flex; gap: 0.35rem; align-items: center; }
+.input-row {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
 .input-row input[type="text"] {
   flex: 1; min-width: 0;
   padding: 0.4rem 0.6rem;
@@ -1005,14 +1135,22 @@ body[data-theme="dark"] .act-btn.danger:hover { background: rgba(248,113,113,0.1
 .input-row input[type="text"]:focus { border-color: var(--grayscale-7); }
 .input-row input[type="text"]::placeholder { color: var(--grayscale-7); }
 
-.swatches { display: inline-flex; gap: 0.3rem; }
+.swatches {
+  display: inline-flex;
+  gap: 0.3rem;
+}
 .swatch {
   width: 22px; height: 22px; border-radius: 6px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(0,0,0,0.06);
   background: #888;
 }
 
-.shortcut-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0; }
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+}
 .shortcut-row-label {
   flex: 1; min-width: 0;
   color: var(--grayscale-11); font-size: 0.82rem;
@@ -1030,8 +1168,14 @@ body[data-theme="dark"] .act-btn.danger:hover { background: rgba(248,113,113,0.1
   min-width: 4.5rem; text-align: center;
   transition: all .13s;
 }
-.key-badge:hover { background: var(--grayscale-1); border-color: var(--grayscale-6); }
-.key-badge:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
+.key-badge:hover {
+  background: var(--grayscale-1);
+  border-color: var(--grayscale-6);
+}
+.key-badge:focus-visible {
+  outline: 2px solid var(--grayscale-12);
+  outline-offset: 2px;
+}
 .key-badge.listening {
   background: var(--grayscale-12); color: var(--grayscale-1);
   border-color: var(--grayscale-12);
@@ -1059,9 +1203,19 @@ body[data-theme="dark"] .key-badge.custom {
   cursor: pointer; display: grid; place-items: center;
   transition: all .13s; flex-shrink: 0;
 }
-.key-reset:hover { background: var(--grayscale-3); color: var(--grayscale-12); border-color: var(--grayscale-4); }
-.key-reset:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
-.key-reset:disabled { opacity: 0.35; cursor: not-allowed; }
+.key-reset:hover {
+  background: var(--grayscale-3);
+  color: var(--grayscale-12);
+  border-color: var(--grayscale-4);
+}
+.key-reset:focus-visible {
+  outline: 2px solid var(--grayscale-12);
+  outline-offset: 2px;
+}
+.key-reset:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
 .key-reset svg {
   width: 12px; height: 12px;
   fill: none; stroke: currentColor; stroke-width: 2;
@@ -1075,10 +1229,25 @@ body[data-theme="dark"] .key-badge.custom {
   border: 1px solid var(--grayscale-3);
   margin-bottom: 0.6rem;
 }
-body[data-theme="dark"] .perf-promo { background: var(--grayscale-3); border-color: var(--grayscale-4); }
-.perf-promo-body { flex: 1; min-width: 0; }
-.perf-promo-title { font-size: 0.82rem; font-weight: 600; color: var(--grayscale-12); margin-bottom: 0.15rem; }
-.perf-promo-desc { font-size: 0.72rem; line-height: 1.4; color: var(--grayscale-9); }
+body[data-theme="dark"] .perf-promo {
+  background: var(--grayscale-3);
+  border-color: var(--grayscale-4);
+}
+.perf-promo-body {
+  flex: 1;
+  min-width: 0;
+}
+.perf-promo-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--grayscale-12);
+  margin-bottom: 0.15rem;
+}
+.perf-promo-desc {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--grayscale-9);
+}
 
 body[data-perf="on"] .gradient-bg { display: none !important; }
 body[data-perf="on"] .cassette-texture,
@@ -1121,8 +1290,8 @@ body[data-perf="on"] * { transition-duration: 0.05s !important; }
 
 .mini-player {
   position: fixed;
-  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
-  left: calc(1.5rem + env(safe-area-inset-left, 0px));
+  bottom: 1.5rem;
+  left: 1.5rem;
   display: flex; align-items: center; gap: 0.55rem;
   padding: 0.4rem 0.5rem 0.4rem 0.4rem;
   background: var(--grayscale-1);
@@ -1134,7 +1303,6 @@ body[data-perf="on"] * { transition-duration: 0.05s !important; }
   z-index: 98;
   cursor: grab;
   user-select: none;
-  touch-action: none;
   max-width: calc(100vw - 3rem);
 }
 .mini-player[hidden] { display: none; }
@@ -1150,14 +1318,24 @@ body[data-perf="on"] * { transition-duration: 0.05s !important; }
 }
 .mini-btn:hover { transform: scale(1.05); }
 .mini-btn:active { transform: scale(0.94); }
-.mini-btn:focus-visible { outline: 2px solid var(--grayscale-12); outline-offset: 2px; }
-.mini-btn svg { width: 14px; height: 14px; fill: currentColor; }
+.mini-btn:focus-visible {
+  outline: 2px solid var(--grayscale-12);
+  outline-offset: 2px;
+}
+.mini-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
 
 .mini-btn.mini-expand {
   background: transparent; color: var(--grayscale-9);
   width: 1.9rem; height: 1.9rem;
 }
-.mini-btn.mini-expand:hover { background: var(--grayscale-3); color: var(--grayscale-12); }
+.mini-btn.mini-expand:hover {
+  background: var(--grayscale-3);
+  color: var(--grayscale-12);
+}
 .mini-btn.mini-expand svg {
   fill: none; stroke: currentColor; stroke-width: 2;
   stroke-linecap: round; stroke-linejoin: round;
@@ -1188,145 +1366,9 @@ body.minimized .playlist-shell { display: none; }
 
 audio { display: none; }
 
-/* ═══════════════════════════════════════════════════════════
-   TOUCH / POINTER / VIEWPORT ADAPTATIONS
-   ═══════════════════════════════════════════════════════════ */
-
-/* Touch-pointer adjustments (any touch device) */
-@media (hover: none) and (pointer: coarse) {
-  .corner-btn { min-width: 36px; min-height: 36px; }
-  .tab-remove { min-width: 32px; min-height: 32px; }
-  .settings-close { min-width: 36px; min-height: 36px; }
-  .key-reset { min-width: 34px; min-height: 34px; }
-}
-
-/* Suppress stuck :hover styling on touch */
-@media (hover: none) {
-  .playlist-tab:hover:not(.active) {
-    background: transparent;
-    color: var(--grayscale-10);
-  }
-  .corner-btn:hover,
-  .ctrl-btn.small:hover,
-  .ctrl-btn.large:hover,
-  .mini-btn:hover,
-  .fab:hover { transform: none; }
-}
-
-/* Prevent iOS auto-zoom on input focus */
-@media (max-width: 640px) {
-  .input-row input[type="text"] { font-size: 16px; padding: 0.55rem 0.7rem; }
-}
-
-/* Phone layout */
-@media (max-width: 640px) {
-  .player-shell {   margin-top: 1.5rem;
-  header { padding-left: 0; padding-right: 0; }
-   .player {   min-height: 0;   padding: 1.25rem 0.5rem; }
-  .control-bar {
-    height: 20%; bottom: 2%;
-    left: 24%; right: 24%;
-    padding: 0 8%;
-  }
-  .ctrl-btn.small { width: clamp(30px, 7cqw, 38px); }
-  .ctrl-btn.large { width: clamp(40px, 9cqw, 48px); }
-  .corner-btn { width: 2.25rem; height: 2.25rem; }
-  .corner-btn svg { width: 16px; height: 16px; }
-  .fab { width: 2.85rem; height: 2.85rem; }
-  .fab svg { width: 18px; height: 18px; }
-  .mini-btn { width: 2.5rem; height: 2.5rem; }
-  .mini-btn svg { width: 16px; height: 16px; }
-  .mini-btn.mini-expand { width: 2.25rem; height: 2.25rem; }
-  .playlist-add-btn { padding: 0.5rem 0.75rem; font-size: 0.72rem; border-radius: 8px; }
-  .playlist-add-btn svg { width: 12px; height: 12px; }
-  .tab-remove { width: 2rem; height: 2rem; }
-  .tab-remove svg { width: 12px; height: 12px; }
-  .playlist-tab.has-remove { padding-right: 2.6rem; }
-  .playlist-tab { min-height: 3.25rem; }
-  .settings-close { width: 2.25rem; height: 2.25rem; }
-  .settings-close svg { width: 16px; height: 16px; }
-  .act-btn { padding: 0.55rem 0.85rem; font-size: 0.78rem; }
-  .seg-btn { padding: 0.4rem 0.75rem; font-size: 0.75rem; }
-  .switch { width: 44px; height: 24px; }
-  .switch span::before { height: 20px; width: 20px; }
-  .switch input:checked + span::before { transform: translateX(20px); }
-  .range-row input[type="range"]::-webkit-slider-thumb { width: 18px; height: 18px; margin-top: -8px; }
-  .range-row input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; }
-  .range-row input[type="range"] { height: 28px; }
-  .key-badge { font-size: 0.72rem; padding: 8px 12px; min-width: 5.5rem; }
-  .key-reset { width: 2.25rem; height: 2.25rem; }
-  .key-reset svg { width: 14px; height: 14px; }
-  .tab-meta { font-size: 0.68rem; }
-  .playlist-title { font-size: 0.72rem; }
-  .playlist-count { font-size: 0.72rem; }
-  .popup-title { font-size: 0.72rem; }
-  .setting-section-title { font-size: 0.68rem; }
-  .mini-meta { font-size: 0.62rem; }
-  .time-row { font-size: 0.8rem; }
-  .progress-thumb { width: 16px; height: 16px; }
-  .progress-slider { height: 2rem; }
-  .settings-body {
-    padding: 0.85rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
-  }
-}
-
-/* Tablet layout (touch + moderate width) */
-@media (min-width: 641px) and (max-width: 1024px) and (pointer: coarse) {
-  .player { padding: 3rem 1.5rem; }
-  .ctrl-btn.small { width: clamp(28px, 6.5cqw, 36px); }
-  .ctrl-btn.large { width: clamp(36px, 8.2cqw, 48px); }
-  .corner-btn { width: 2.25rem; height: 2.25rem; }
-  .fab { width: 3rem; height: 3rem; }
-  .fab svg { width: 18px; height: 18px; }
-  .mini-btn { width: 2.75rem; height: 2.75rem; }
-  .mini-btn svg { width: 16px; height: 16px; }
-  .switch { width: 42px; height: 22px; }
-  .switch span::before { height: 18px; width: 18px; }
-  .switch input:checked + span::before { transform: translateX(20px); }
-  .tab-remove { width: 1.75rem; height: 1.75rem; }
-  .playlist-tab.has-remove { padding-right: 2.4rem; }
-}
-
-/* Landscape phones: 420px min-height would overflow the viewport */
-@media (max-height: 560px) and (orientation: landscape) {
-  .player { min-height: 300px; padding: 1.5rem 0.75rem; }
-  .player-inner { max-width: 480px; }
-}
 </style>
 </head>
-<body data-appearance="normal" data-theme="light" data-perf="off" data-blur="on" data-reels="on" data-grad-anim="on" data-device="desktop" data-has-keyboard="true">
-<script>
-/* ─────────────────────────────────────────────────────────
-   Early device probe — runs before first paint to avoid FOUC.
-   Sets data-device and data-has-keyboard on <body> so CSS can
-   hide the keyboard-shortcuts UI immediately on touch devices.
-   ───────────────────────────────────────────────────────── */
-(function () {
-  var ua = navigator.userAgent || '';
-  var mtp = navigator.maxTouchPoints || 0;
-  var hasTouch = mtp > 0;
-  var sw = screen.width, sh = screen.height;
-  var minSide = Math.min(sw, sh), maxSide = Math.max(sw, sh);
-
-  // iPadOS 13+ reports as Macintosh, but always has multi-touch.
-  var isIPad = /iPad/.test(ua) || (/Macintosh/.test(ua) && mtp > 1);
-
-  var type;
-  if (isIPad) type = 'tablet';
-  else if (/Android/.test(ua)) type = (!/Mobile/.test(ua) || minSide >= 600) ? 'tablet' : 'phone';
-  else if (/iPhone|iPod|Windows Phone|BlackBerry|Opera Mini|IEMobile/.test(ua)) type = 'phone';
-  else if (hasTouch) type = minSide < 500 ? 'phone' : minSide < 900 ? 'tablet' : 'laptop';
-  else type = maxSide <= 1440 ? 'laptop' : 'desktop';
-
-  var b = document.body;
-  b.dataset.device = type;
-  // Touch-only device classes start with no physical keyboard assumed.
-  // The main script will flip this to "true" the moment a real key is pressed.
-  var mobile = (type === 'phone' || type === 'tablet');
-  b.dataset.hasKeyboard = mobile ? 'false' : 'true';
-})();
-</script>
-
+<body data-appearance="normal" data-theme="light" data-perf="off" data-blur="on" data-reels="on" data-grad-anim="on">
 <!-- Reusable SVG defs (reel spokes) — hidden, used by both reels -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
@@ -1445,7 +1487,7 @@ audio { display: none; }
                 </svg>
               </button>
               <div class="volume-wrap">
-                <button class="ctrl-btn small" id="muteBtn" aria-label="Mute" title="Tap to mute · long-press for volume">
+                <button class="ctrl-btn small" id="muteBtn" aria-label="Mute" title="Toggle mute">
                   <svg id="volumeIcon" viewBox="0 0 256 256" aria-hidden="true">
                     <path d="M157.27,21.22a12,12,0,0,0-12.64,1.31L75.88,76H32A20,20,0,0,0,12,96v64a20,20,0,0,0,20,20H75.88l68.75,53.47A12,12,0,0,0,164,224V32A12,12,0,0,0,157.27,21.22ZM36,100H68v56H36Zm104,99.46L92,162.13V93.87l48-37.33ZM212,128a44,44,0,0,1-11,29.11,12,12,0,1,1-18-15.88,20,20,0,0,0,0-26.43,12,12,0,0,1,18-15.86A43.94,43.94,0,0,1,212,128Zm40,0a83.87,83.87,0,0,1-21.39,56,12,12,0,0,1-17.89-16,60,60,0,0,0,0-80,12,12,0,1,1,17.88-16A83.87,83.87,0,0,1,252,128Z"/>
                   </svg>
@@ -1536,29 +1578,6 @@ audio { display: none; }
   </div>
   <div class="settings-body">
 
-    <!-- ══ Device (auto-detected) ══ -->
-    <section class="setting-section">
-      <h3 class="setting-section-title">Device</h3>
-      <div class="setting-row">
-        <span class="setting-row-label">Detected as</span>
-        <span class="device-pill" id="devicePill">Desktop</span>
-      </div>
-      <p class="setting-desc" id="deviceDesc">Desktop layout. Full keyboard shortcut support and hover effects.</p>
-      <div class="setting-row">
-        <span class="setting-row-label">Touch input</span>
-        <span class="device-pill" id="touchPill">No</span>
-      </div>
-      <div class="setting-row">
-        <span class="setting-row-label">Physical keyboard</span>
-        <span class="device-pill" id="kbPill">Available</span>
-      </div>
-      <div class="setting-row">
-        <span class="setting-row-label">Force keyboard shortcuts</span>
-        <label class="switch"><input type="checkbox" id="optForceKeyboard"><span></span></label>
-      </div>
-      <p class="setting-desc">Keyboard shortcuts appear automatically when a physical keyboard is used. Enable to force them on regardless.</p>
-    </section>
-
     <section class="setting-section">
       <h3 class="setting-section-title">Appearance</h3>
       <div class="setting-row">
@@ -1638,7 +1657,7 @@ audio { display: none; }
       </div>
     </section>
 
-    <section class="setting-section setting-section-shortcuts">
+    <section class="setting-section">
       <h3 class="setting-section-title">Shortcuts</h3>
       <div id="shortcutEditor"></div>
       <div class="setting-row" style="justify-content: flex-end; padding-top: 0.6rem;">
@@ -1740,7 +1759,6 @@ audio { display: none; }
     shortcuts: { ...DEFAULT_SHORTCUTS },
     playback: { shuffle: false, repeat: 'off', autoplayNext: true, rememberPosition: false },
     performance: { enabled: false, animations: true, reels: true, blur: true },
-    device: { forceKeyboard: false },
     volume: 0.78,
     muted: false,
     trackIndex: 0,
@@ -1892,12 +1910,6 @@ audio { display: none; }
   const settingsPanel = $('settingsPanel');
   const settingsClose = $('settingsClose');
 
-  const devicePill = $('devicePill');
-  const deviceDesc = $('deviceDesc');
-  const touchPill = $('touchPill');
-  const kbPill = $('kbPill');
-  const optForceKeyboard = $('optForceKeyboard');
-
   const appearanceDesc = $('appearanceDesc');
   const gradientOpts = $('gradientOpts');
   const wallpaperOpts = $('wallpaperOpts');
@@ -1973,13 +1985,6 @@ audio { display: none; }
   let _lastElapsedSec = -1;
   let _trackGen = 0;
 
-  /* ───── Device + keyboard detection state ───── */
-  const DEVICE_TYPE = document.body.dataset.device || 'desktop';
-  const IS_MOBILE_CLASS = DEVICE_TYPE === 'phone' || DEVICE_TYPE === 'tablet';
-  const HAS_TOUCH = (navigator.maxTouchPoints || 0) > 0;
-  let physicalKeyboardDetected = !IS_MOBILE_CLASS;
-  let keyboardProbeAttached = false;
-
   function formatTime(s) {
     if (!isFinite(s) || s < 0) return '0:00';
     const m = Math.floor(s / 60);
@@ -1991,76 +1996,6 @@ audio { display: none; }
   }
   function currentTrack() { return TRACKS[currentIndex]; }
   function pad2(n) { return String(n).padStart(2, '0'); }
-
-  /* ───── Physical keyboard probe ──────────────────────────
-     No native API exists for "is a hardware keyboard attached".
-     The reliable heuristic: any trusted keydown that isn't from
-     a text field and isn't a lone modifier key implies hardware.
-     Mobile OSKs only fire keydown while a text field is focused,
-     so filtering those out avoids false positives. */
-  function attachKeyboardProbe() {
-    if (keyboardProbeAttached) return;
-    keyboardProbeAttached = true;
-
-    const MOD_KEYS = ['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'OS', 'Fn', 'Hyper'];
-
-    const probe = (e) => {
-      if (!e.isTrusted) return;
-      if (physicalKeyboardDetected) {
-        document.removeEventListener('keydown', probe, true);
-        return;
-      }
-      const t = e.target;
-      const inField = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
-      if (inField) return;
-      if (MOD_KEYS.indexOf(e.key) !== -1) return;
-      if (e.keyCode === 229) return; // IME composition
-      physicalKeyboardDetected = true;
-      updateKeyboardAvailability();
-      document.removeEventListener('keydown', probe, true);
-    };
-    document.addEventListener('keydown', probe, true);
-  }
-
-  function updateKeyboardAvailability() {
-    const forced = !!settings.device.forceKeyboard;
-    const hasKb = !IS_MOBILE_CLASS || physicalKeyboardDetected || forced;
-    document.body.dataset.hasKeyboard = hasKb ? 'true' : 'false';
-    if (!hasKb) {
-      // Force-close the shortcuts panel if it was open
-      shortcutsPanel.setAttribute('data-open', 'false');
-      shortcutsBtn.setAttribute('aria-expanded', 'false');
-    }
-    updateDeviceUI();
-  }
-
-  function updateDeviceUI() {
-    if (!devicePill) return;
-    const labels = { phone: 'Phone', tablet: 'Tablet', laptop: 'Laptop', desktop: 'Desktop' };
-    devicePill.textContent = labels[DEVICE_TYPE] || 'Unknown';
-
-    const descs = {
-      phone:   'Phone layout. Larger tap targets, no hover effects, keyboard shortcuts hidden unless a physical keyboard is used.',
-      tablet:  'Tablet layout. Touch-optimised controls. Connect a keyboard to unlock shortcuts.',
-      laptop:  'Laptop layout. Full keyboard shortcut support.',
-      desktop: 'Desktop layout. Full keyboard shortcut support and hover effects.',
-    };
-    deviceDesc.textContent = descs[DEVICE_TYPE] || '';
-
-    touchPill.textContent = HAS_TOUCH ? 'Yes' : 'No';
-    touchPill.classList.toggle('ok', HAS_TOUCH);
-
-    let kbText, kbClass;
-    if (!IS_MOBILE_CLASS) { kbText = 'Available'; kbClass = 'ok'; }
-    else if (physicalKeyboardDetected) { kbText = 'Detected'; kbClass = 'ok'; }
-    else if (settings.device.forceKeyboard) { kbText = 'Forced on'; kbClass = 'warn'; }
-    else { kbText = 'Not detected'; kbClass = 'warn'; }
-    kbPill.textContent = kbText;
-    kbPill.classList.remove('ok', 'warn');
-    kbPill.classList.add(kbClass);
-
-    optForceKeyboard.checked = !!settings.device.forceKeyboard;
-  }
 
   /* ───── palette ───── */
   function generatePalette() {
@@ -2170,8 +2105,6 @@ audio { display: none; }
     audio.volume = settings.volume;
     audio.muted = settings.muted;
     volumePopup.value = settings.muted ? 0 : settings.volume;
-
-    updateKeyboardAvailability();
   }
 
   function updateVisuals(time) {
@@ -2371,55 +2304,6 @@ audio { display: none; }
   }
   restartBtn.addEventListener('click', doRestart);
 
-  /* ───── Mute + touch-friendly volume reveal ───────
-     Desktop: hover reveals the slider (pure CSS).
-     Touch:   long-press (450 ms) reveals it for 4 s.
-     The click is suppressed on long-press so mute doesn't toggle. */
-  const LONG_PRESS_MS = 450;
-  const VOLUME_REVEAL_MS = 4000;
-  let _longPressTimer = 0;
-  let _suppressNextMuteClick = false;
-  let _volumeRevealTimer = 0;
-
-  function revealVolume(ms) {
-    document.body.classList.add('volume-revealed');
-    clearTimeout(_volumeRevealTimer);
-    _volumeRevealTimer = setTimeout(() => {
-      document.body.classList.remove('volume-revealed');
-      _volumeRevealTimer = 0;
-    }, ms);
-  }
-  function hideVolume() {
-    if (_volumeRevealTimer) { clearTimeout(_volumeRevealTimer); _volumeRevealTimer = 0; }
-    document.body.classList.remove('volume-revealed');
-  }
-
-  muteBtn.addEventListener('contextmenu', (e) => e.preventDefault());
-  muteBtn.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'mouse') return;
-    clearTimeout(_longPressTimer);
-    _longPressTimer = setTimeout(() => {
-      _longPressTimer = 0;
-      _suppressNextMuteClick = true;
-      revealVolume(VOLUME_REVEAL_MS);
-    }, LONG_PRESS_MS);
-  });
-  const cancelLongPress = () => {
-    if (_longPressTimer) { clearTimeout(_longPressTimer); _longPressTimer = 0; }
-  };
-  muteBtn.addEventListener('pointerup', cancelLongPress);
-  muteBtn.addEventListener('pointercancel', cancelLongPress);
-  muteBtn.addEventListener('pointerleave', cancelLongPress);
-
-  // Capture-phase guard so it runs before the normal click handler.
-  muteBtn.addEventListener('click', (e) => {
-    if (_suppressNextMuteClick) {
-      _suppressNextMuteClick = false;
-      e.stopImmediatePropagation();
-      e.preventDefault();
-    }
-  }, true);
-
   function doMute() {
     audio.muted = !audio.muted;
     settings.muted = audio.muted;
@@ -2435,18 +2319,7 @@ audio { display: none; }
     settings.volume = v;
     settings.muted = audio.muted;
     saveSettings();
-    if (document.body.classList.contains('volume-revealed')) {
-      // Keep it visible while the user is actively adjusting.
-      revealVolume(VOLUME_REVEAL_MS);
-    }
   });
-
-  // Tap outside to dismiss the revealed slider.
-  document.addEventListener('pointerdown', (e) => {
-    if (!document.body.classList.contains('volume-revealed')) return;
-    if (e.target.closest('.volume-wrap')) return;
-    hideVolume();
-  }, true);
 
   function placeMini(x, y, measuredWidth, measuredHeight) {
     const w = measuredWidth || miniPlayer.offsetWidth || 240;
@@ -2649,7 +2522,7 @@ audio { display: none; }
   });
 
   window.addEventListener('beforeunload', () => {
-    if (settings.playback.rememberPosition && !audio.paused) {
+    if (settings.playback.rememberPosition && currentTrack() && !audio.ended && Number.isFinite(audio.currentTime)) {
       savedPosition = { trackIndex: currentIndex, currentTime: audio.currentTime };
       try { sessionStorage.setItem('cassette:pos', JSON.stringify(savedPosition)); } catch {}
     }
@@ -3270,12 +3143,6 @@ audio { display: none; }
     applySettings();
   });
 
-  optForceKeyboard.addEventListener('change', () => {
-    settings.device.forceKeyboard = optForceKeyboard.checked;
-    saveSettings();
-    updateKeyboardAvailability();
-  });
-
   resetAllSettings.addEventListener('click', () => {
     if (!confirm('Reset every setting to defaults? This clears appearance, theme, shortcuts, playback and performance preferences.')) return;
     settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
@@ -3299,14 +3166,14 @@ audio { display: none; }
     const wantAlt = mods.includes('Alt');
     if (wantCtrl !== (e.ctrlKey || e.metaKey)) return false;
     if (wantAlt !== e.altKey) return false;
-    if (wantShift !== e.shiftKey && e.key.length !== 1) return false;
+    if (wantShift !== e.shiftKey) return false;
     let eKey = e.key;
     if (eKey === ' ') eKey = 'Space';
     else if (eKey.length === 1) eKey = eKey.toUpperCase();
     return eKey === key;
   }
 
-  const SLIDER_KEYS = ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','Home','End'];
+  const SLIDER_KEYS = ['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
 
   document.addEventListener('keydown', (e) => {
     if (listeningAction || e.repeat) return;
@@ -3377,10 +3244,6 @@ audio { display: none; }
     setSliderDisabled(true);
 
     setMinimized(!!settings.minimized);
-
-    // Only attach the physical-keyboard probe on mobile-class devices —
-    // laptops and desktops already have a keyboard by definition.
-    if (IS_MOBILE_CLASS) attachKeyboardProbe();
 
     const startIdx = Math.max(0, Math.min(TRACKS.length - 1, settings.trackIndex | 0));
     if (TRACKS.length > 0) {
